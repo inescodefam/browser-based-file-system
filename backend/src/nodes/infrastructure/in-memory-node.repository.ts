@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
-import { FileSystemNode } from '../domain/node';
+import { compareByName, FileSystemNode, NodeType } from '../domain/node';
 import { NodeAlreadyExistsError, ParentNotFoundError } from '../domain/node.errors';
 import { CreateNodeInput, NodeRepository } from '../domain/node.repository';
 
@@ -39,17 +39,37 @@ export class InMemoryNodeRepository implements NodeRepository {
     const root = this.nodesById.get(id);
     if (!root) return false;
 
-    const subtree = [root];
-    for (const current of subtree) {
-      const children = this.childrenByParent.get(current.id);
-      if (children) subtree.push(...children.values());
-    }
-
+    const subtree = this.collectSubtree(root);
     for (const node of subtree) {
       this.nodesById.delete(node.id);
       this.childrenByParent.delete(node.id);
     }
     this.childrenByParent.get(root.parentId)?.delete(root.name);
     return true;
+  }
+
+   async findFilesByExactName(name: string, folderId: string | null): Promise<FileSystemNode[]> {
+    let candidates: Iterable<FileSystemNode> = this.nodesById.values();
+    if (folderId !== null) {
+      const folder = this.nodesById.get(folderId);
+      candidates = folder ? this.collectSubtree(folder) : [];
+    }
+    return [...candidates].filter((node) => node.type === NodeType.FILE && node.name === name);
+  } 
+
+  async findFilesByPrefix(prefix: string, limit: number): Promise<FileSystemNode[]> {
+    return [...this.nodesById.values()]
+      .filter((node) => node.type === NodeType.FILE && node.name.startsWith(prefix))
+      .sort(compareByName)
+      .slice(0, limit);
+  }
+
+  private collectSubtree(root: FileSystemNode): FileSystemNode[] {
+    const subtree = [root];
+    for (const current of subtree) {
+      const children = this.childrenByParent.get(current.id);
+      if (children) subtree.push(...children.values());
+    }
+    return subtree;
   }
 }

@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
-import { envValidationSchema } from './config/env.validation.js';
 import { ConfigModule } from '@nestjs/config';
+import { envValidationSchema } from './config/env.validation';
+import { NodesModule } from './nodes/nodes.module';
 
 @Module({
   imports: [
@@ -9,7 +10,7 @@ import { ConfigModule } from '@nestjs/config';
       envFilePath: ['../.env', '.env'],
       validationSchema: envValidationSchema,
     }),
+    NodesModule,
   ],
-  
 })
 export class AppModule {}

@@ -9,6 +9,10 @@ import { NameMaxLengthConstraint } from './decorators/name-max-length.constraint
 const MAX_LENGTH = 10;
 const VALID_UUID = '3f1c2a8e-5b7d-4c1e-9a2b-6d8f0e1a2b3c';
 
+const FORBIDDEN_CHARS_MESSAGE = 'Name must not contain "/" or "\\" and must not be "." or ".."';
+const EXTENSION_MESSAGE = 'File name must have an extension, e.g. "report.pdf"';
+const MAX_LENGTH_MESSAGE = `Name must be at most ${MAX_LENGTH} characters long.`;
+
 async function errorsFor<T extends object>(
   dto: new () => T,
   payload: Record<string, unknown>,
@@ -60,7 +64,7 @@ describe('create node DTOs', () => {
 
     it.each(['a/b', 'a\\b', '.', '..'])('rejects the forbidden name %j', async (name) => {
       await expect(errorsFor(CreateFolderDto, { name })).resolves.toContain(
-        'name must not contain "/" or "\\" and must not be "." or ".."',
+        FORBIDDEN_CHARS_MESSAGE,
       );
     });
 
@@ -70,7 +74,7 @@ describe('create node DTOs', () => {
       ).resolves.toEqual([]);
       await expect(
         errorsFor(CreateFolderDto, { name: 'a'.repeat(MAX_LENGTH + 1) }),
-      ).resolves.toContain(`name must be at most ${MAX_LENGTH} characters long`);
+      ).resolves.toContain(MAX_LENGTH_MESSAGE);
     });
 
     it('rejects a missing or non-string name', async () => {
@@ -99,15 +103,13 @@ describe('create node DTOs', () => {
     it.each(['report', 'report.', '.env', 'a.toolongextension', 'a.p df'])(
       'rejects %j because it has no valid extension',
       async (name) => {
-        await expect(errorsFor(CreateFileDto, { name })).resolves.toContain(
-          'file name must have an extension, e.g. "report.pdf"',
-        );
+        await expect(errorsFor(CreateFileDto, { name })).resolves.toContain(EXTENSION_MESSAGE);
       },
     );
 
     it('applies the shared name rules too', async () => {
       await expect(errorsFor(CreateFileDto, { name: 'a/b.txt' })).resolves.toContain(
-        'name must not contain "/" or "\\" and must not be "." or ".."',
+        FORBIDDEN_CHARS_MESSAGE,
       );
     });
   });

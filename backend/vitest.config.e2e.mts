@@ -6,5 +6,6 @@ export default defineConfig({
     globals: true,
     root: './',
     include: ['**/*.e2e-spec.ts'],
+    env: { DB_DRIVER: 'memory', SEARCH_LIMIT: '10' },
   },
 });
