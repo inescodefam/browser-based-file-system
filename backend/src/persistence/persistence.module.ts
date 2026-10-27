@@ -1,8 +1,10 @@
 import { Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { Pool } from 'pg';
 import { EnvVars } from '../config/env.validation';
 import { NODE_REPOSITORY, type NodeRepository } from '../nodes/domain/node.repository';
 import { InMemoryNodeRepository } from '../nodes/infrastructure/in-memory-node.repository';
+import { PostgresNodeRepository } from '../nodes/infrastructure/postgres-node.repository';
 
 @Module({
   providers: [
@@ -14,8 +16,10 @@ import { InMemoryNodeRepository } from '../nodes/infrastructure/in-memory-node.r
         switch (driver) {
           case 'memory':
             return new InMemoryNodeRepository();
-          case 'postgres':
-            throw new Error('DB_DRIVER=postgres is not implemented yet');
+          case 'postgres': {
+            const connectionString = config.get('DATABASE_URL', { infer: true });
+            return new PostgresNodeRepository(new Pool({ connectionString }));
+          }
         }
       },
     },
