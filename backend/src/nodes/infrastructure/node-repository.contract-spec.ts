@@ -117,5 +117,95 @@ export function describeNodeRepositoryContract(
     it('returns false when deleting an unknown id', async () => {
       await expect(repo.delete(randomUUID())).resolves.toBe(false);
     });
+
+    describe('findFilesByExactName', () => {
+      it('searches everywhere, at any depth', async () => {
+        const docs = await folder('docs');
+        const top = await file('report.pdf');
+        const nested = await file('report.pdf', docs.id);
+        await file('other.pdf');
+
+        const found = await repo.findFilesByExactName('report.pdf', null);
+
+        expect(found.map((n) => n.id).sort()).toEqual([top.id, nested.id].sort());
+      });
+
+      it('ignores a folder that has the searched name', async () => {
+        await folder('archive');
+
+        await expect(repo.findFilesByExactName('archive', null)).resolves.toEqual([]);
+      });
+
+      it('searches a folder and all its subfolders, but nothing outside', async () => {
+        const docs = await folder('docs');
+        const sub = await folder('sub', docs.id);
+        const other = await folder('other');
+        const inDocs = await file('x.txt', docs.id);
+        const deep = await file('x.txt', sub.id);
+        await file('x.txt', other.id);
+        await file('x.txt');
+
+        const found = await repo.findFilesByExactName('x.txt', docs.id);
+
+        expect(found.map((n) => n.id).sort()).toEqual([inDocs.id, deep.id].sort());
+      });
+
+      it('is case-sensitive and needs the whole name', async () => {
+        await file('Report.pdf');
+        await file('report.pdf.bak');
+
+        await expect(repo.findFilesByExactName('report.pdf', null)).resolves.toEqual([]);
+      });
+
+      it('returns nothing for an unknown folder', async () => {
+        await file('x.txt');
+
+        await expect(repo.findFilesByExactName('x.txt', randomUUID())).resolves.toEqual([]);
+      });
+    });
+
+    describe('findFilesByPrefix', () => {
+      it('returns files starting with the prefix, ordered by name, never folders', async () => {
+        const docs = await folder('docs');
+        await file('report-b.txt');
+        await file('report-a.txt', docs.id);
+        await file('other.txt');
+        await folder('report-folder');
+
+        const found = await repo.findFilesByPrefix('report', 10);
+
+        expect(found.map((n) => n.name)).toEqual(['report-a.txt', 'report-b.txt']);
+      });
+
+      it('is case-sensitive', async () => {
+        await file('Report.txt');
+
+        await expect(repo.findFilesByPrefix('report', 10)).resolves.toEqual([]);
+      });
+
+      it('returns at most `limit` results (the first ones by name)', async () => {
+        for (const name of ['f3.txt', 'f1.txt', 'f5.txt', 'f2.txt', 'f4.txt']) {
+          await file(name);
+        }
+
+        const found = await repo.findFilesByPrefix('f', 3);
+
+        expect(found.map((n) => n.name)).toEqual(['f1.txt', 'f2.txt', 'f3.txt']);
+      });
+
+      // Each prefix would also match `lookalike` if %, _ or \ were treated as LIKE wildcards/escapes
+      it.each([
+        { prefix: '%', matching: '%sale.txt', lookalike: 'sale.txt' },
+        { prefix: 'a_', matching: 'a_b.txt', lookalike: 'axb.txt' },
+        { prefix: 'a\\', matching: 'a\\b.txt', lookalike: 'ab.txt' },
+      ])('treats %j literally, not as a wildcard', async ({ prefix, matching, lookalike }) => {
+        await file(matching);
+        await file(lookalike);
+
+        const found = await repo.findFilesByPrefix(prefix, 10);
+
+        expect(found.map((n) => n.name)).toEqual([matching]);
+      });
+    });
   });
 }

@@ -1,13 +1,19 @@
 import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { NodeType } from './domain/node';
 import { InMemoryNodeRepository } from './infrastructure/in-memory-node.repository';
 import { NodesService } from './nodes.service';
+
+const SEARCH_LIMIT = 3;
 
 describe('NodesService', () => {
   let service: NodesService;
 
   beforeEach(() => {
-    service = new NodesService(new InMemoryNodeRepository());
+    service = new NodesService(
+      new InMemoryNodeRepository(),
+      new ConfigService({ SEARCH_LIMIT }),
+    );
   });
 
   describe('create', () => {
@@ -119,6 +125,72 @@ describe('NodesService', () => {
 
     it('throws 404 for an unknown id', async () => {
       await expect(service.delete('missing-id')).rejects.toBeInstanceOf(NotFoundException);
+    });
+  });
+
+  describe('findFilesByName', () => {
+    it('finds files by exact name everywhere', async () => {
+      const docs = await service.createFolder({ name: 'docs' });
+      await service.createFile({ name: 'report.pdf' });
+      await service.createFile({ name: 'report.pdf', parentId: docs.id });
+
+      const found = await service.findFilesByName('report.pdf', null);
+
+      expect(found).toHaveLength(2);
+    });
+
+    it('limits the search to a folder and its subfolders', async () => {
+      const docs = await service.createFolder({ name: 'docs' });
+      const sub = await service.createFolder({ name: 'sub', parentId: docs.id });
+      await service.createFile({ name: 'x.txt', parentId: sub.id });
+      await service.createFile({ name: 'x.txt' });
+
+      const found = await service.findFilesByName('x.txt', docs.id);
+
+      expect(found).toHaveLength(1);
+      expect(found[0].parentId).toBe(sub.id);
+    });
+
+    it('is case-sensitive', async () => {
+      await service.createFile({ name: 'Report.pdf' });
+
+      await expect(service.findFilesByName('report.pdf', null)).resolves.toEqual([]);
+    });
+
+    it('throws 404 for an unknown folder', async () => {
+      await expect(service.findFilesByName('x.txt', 'missing-id')).rejects.toBeInstanceOf(
+        NotFoundException,
+      );
+    });
+
+    it('throws 400 when the folder is a file', async () => {
+      const file = await service.createFile({ name: 'a.txt' });
+
+      await expect(service.findFilesByName('x.txt', file.id)).rejects.toBeInstanceOf(
+        BadRequestException,
+      );
+    });
+  });
+
+  describe('suggestFiles', () => {
+    it('returns files starting with the prefix, ordered by name', async () => {
+      await service.createFile({ name: 'report-b.txt' });
+      await service.createFile({ name: 'report-a.txt' });
+      await service.createFile({ name: 'other.txt' });
+
+      const names = (await service.suggestFiles('report')).map((n) => n.name);
+
+      expect(names).toEqual(['report-a.txt', 'report-b.txt']);
+    });
+
+    it('returns at most SEARCH_LIMIT results', async () => {
+      for (const name of ['f1.txt', 'f2.txt', 'f3.txt', 'f4.txt', 'f5.txt']) {
+        await service.createFile({ name });
+      }
+
+      const suggestions = await service.suggestFiles('f');
+
+      expect(suggestions).toHaveLength(SEARCH_LIMIT);
     });
   });
 });
