@@ -31,14 +31,21 @@ export function FileName() {
   );
 }
 
-export function ParentId() {
+export function ParentId(
+  description = 'Id of the parent folder. Omit (or null) to create at the top level.',
+) {
   return applyDecorators(
-    ApiPropertyOptional({
-      format: 'uuid',
-      nullable: true,
-      description: 'Id of the parent folder. Omit (or null) to create at the top level.',
-    }),
+    ApiPropertyOptional({ format: 'uuid', nullable: true, description }),
     IsOptional(),
     IsUUID(),
+  );
+}
+
+export function SearchTerm(description: string, example: string) {
+  return applyDecorators(
+    ApiProperty({ description, example }),
+    IsString(),
+    IsNotEmpty(),
+    NameMaxLength(),
   );
 }
