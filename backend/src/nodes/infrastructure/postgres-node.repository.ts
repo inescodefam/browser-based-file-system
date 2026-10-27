@@ -28,6 +28,8 @@ const toNode = (row: NodeRow): FileSystemNode => ({
   createdAt: row.created_at,
 });
 
+const escapeLikePattern = (text: string): string => text.replace(/[\\%_]/g, '\\$&');
+
 const hasPgCode = (error: unknown, code: string): boolean =>
   typeof error === 'object' && error !== null && 'code' in error && error.code === code;
 
@@ -84,5 +86,33 @@ export class PostgresNodeRepository implements NodeRepository, OnModuleInit, OnM
   async delete(id: string): Promise<boolean> {
     const result = await this.pool.query('DELETE FROM nodes WHERE id = $1', [id]);
     return (result.rowCount ?? 0) > 0;
+  }
+
+  async findFilesByExactName(name: string, folderId: string | null): Promise<FileSystemNode[]> {
+    const { rows } =
+      folderId === null
+        ? await this.pool.query<NodeRow>(
+            `SELECT ${COLUMNS} FROM nodes WHERE type = 'file' AND name = $1`,
+            [name],
+          )
+        : await this.pool.query<NodeRow>(
+            `SELECT ${COLUMNS} FROM nodes
+             WHERE type = 'file' AND name = $1
+               AND path <@ (SELECT path FROM nodes WHERE id = $2)`,
+            [name, folderId],
+          );
+    return rows.map(toNode);
+  }
+
+  async findFilesByPrefix(prefix: string, limit: number): Promise<FileSystemNode[]> {
+
+    const { rows } = await this.pool.query<NodeRow>(
+      `SELECT ${COLUMNS} FROM nodes
+       WHERE type = 'file' AND name LIKE $1
+       ORDER BY name USING ~<~
+       LIMIT $2`,
+      [`${escapeLikePattern(prefix)}%`, limit],
+    );
+    return rows.map(toNode);
   }
 }

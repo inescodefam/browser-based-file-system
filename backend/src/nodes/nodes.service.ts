@@ -5,7 +5,9 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { FileSystemNode, NodeType } from './domain/node';
+import { ConfigService } from '@nestjs/config';
+import { EnvVars } from '../config/env.validation';
+import { compareByName, FileSystemNode, NodeType } from './domain/node';
 import { NodeAlreadyExistsError, ParentNotFoundError } from './domain/node.errors';
 import { NODE_REPOSITORY, type NodeRepository } from './domain/node.repository';
 import { CreateFileDto } from './dto/create-file.dto';
@@ -13,7 +15,10 @@ import { CreateFolderDto } from './dto/create-folder.dto';
 
 @Injectable()
 export class NodesService {
-  constructor(@Inject(NODE_REPOSITORY) private readonly repository: NodeRepository) {}
+  constructor(
+    @Inject(NODE_REPOSITORY) private readonly repository: NodeRepository,
+    @Inject(ConfigService) private readonly config: ConfigService<EnvVars, true>,
+  ) {}
 
   createFolder(dto: CreateFolderDto): Promise<FileSystemNode> {
     return this.create(dto, NodeType.FOLDER);
@@ -29,8 +34,17 @@ export class NodesService {
     return children.sort(
       (a, b) =>
         Number(b.type === NodeType.FOLDER) - Number(a.type === NodeType.FOLDER) ||
-        (a.name < b.name ? -1 : a.name > b.name ? 1 : 0),
+        compareByName(a, b),
     );
+  }
+
+  async findFilesByName(name: string, folderId: string | null): Promise<FileSystemNode[]> {
+    await this.assertParentIsFolder(folderId);
+    return this.repository.findFilesByExactName(name, folderId);
+  }
+
+  suggestFiles(prefix: string): Promise<FileSystemNode[]> {
+    return this.repository.findFilesByPrefix(prefix, this.config.get('SEARCH_LIMIT', { infer: true }));
   }
 
   async delete(id: string): Promise<void> {

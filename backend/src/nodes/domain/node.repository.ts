@@ -15,6 +15,10 @@ export interface NodeRepository {
   findChildren(parentId: string | null): Promise<FileSystemNode[]>;
 
   delete(id: string): Promise<boolean>;
+
+  findFilesByExactName(name: string, folderId: string | null): Promise<FileSystemNode[]>;
+
+  findFilesByPrefix(prefix: string, limit: number): Promise<FileSystemNode[]>;
 }
 
 export const NODE_REPOSITORY = Symbol('NODE_REPOSITORY');

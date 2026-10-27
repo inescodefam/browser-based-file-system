@@ -14,4 +14,7 @@ export const POSTGRES_SCHEMA = `
     ON nodes (parent_id, name) NULLS NOT DISTINCT;
 
   CREATE INDEX IF NOT EXISTS nodes_path_gist ON nodes USING GIST (path);
+
+  CREATE INDEX IF NOT EXISTS nodes_file_name_idx
+    ON nodes (name text_pattern_ops) WHERE type = 'file';
 `;
