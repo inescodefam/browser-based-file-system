@@ -1,4 +1,4 @@
-import { Alert, Button, Group, SegmentedControl, Stack, TextInput } from '@mantine/core'
+import { Alert, Button, Group, SegmentedControl, Stack, Text, TextInput } from '@mantine/core'
 import { Controller, useForm, useWatch } from 'react-hook-form'
 import type { FileSystemItemType } from '../../../api/types'
 import { useCreateFileSystemItemMutation } from './useCreateFileSystemItemMutation'
@@ -11,6 +11,7 @@ export const CreateFileSystemItemForm = ({
   parentId: string | null
   onCreated: () => void
 }) => {
+  const canCreateFile = parentId !== null
   const createItem = useCreateFileSystemItemMutation(parentId)
   const {
     register,
@@ -23,9 +24,10 @@ export const CreateFileSystemItemForm = ({
   })
   const type = useWatch({ control, name: 'type' })
 
-  const onSubmit = handleSubmit((values) =>
-    createItem.mutate(values, { onSuccess: onCreated }),
-  )
+  const onSubmit = handleSubmit((values) => {
+    if (values.type === 'file' && !canCreateFile) return
+    createItem.mutate(values, { onSuccess: onCreated })
+  })
 
   return (
     <form onSubmit={onSubmit}>
@@ -43,11 +45,16 @@ export const CreateFileSystemItemForm = ({
               }}
               data={[
                 { label: 'Folder', value: 'folder' },
-                { label: 'File', value: 'file' },
+                { label: 'File', value: 'file', disabled: !canCreateFile },
               ]}
             />
           )}
         />
+        {!canCreateFile && (
+          <Text size="sm" c="dimmed">
+            Files can only be created inside a folder.
+          </Text>
+        )}
         <TextInput
           data-autofocus
           label="Name"

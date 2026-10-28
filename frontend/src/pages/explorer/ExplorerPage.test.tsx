@@ -81,17 +81,31 @@ describe('ExplorerPage tree', () => {
     await waitFor(() => expect(tree.queryByText('inside.txt')).not.toBeInTheDocument())
   })
 
-  it('shows an opened folder in the breadcrumb, and goes back to All items from it', async () => {
+  it('opens a folder on double-click, shows it in the path, and goes back to All items from the breadcrumb', async () => {
     const user = userEvent.setup()
-    renderWithProviders(<ExplorerPage />)
+    const { router } = renderWithProviders(<ExplorerPage />)
 
-    await user.click(await tree.findByText('docs'))
+    await user.dblClick(await tree.findByText('docs'))
 
+    expect(router.state.location.pathname).toBe('/folders/id-1')
+    expect(await tree.findByText('inside.txt')).toBeInTheDocument()
+    expect(tree.queryByText('readme.md')).not.toBeInTheDocument()
     expect(await within(breadcrumb()).findByText('docs')).toBeInTheDocument()
 
     await user.click(within(breadcrumb()).getByRole('button', { name: 'All items' }))
 
-    await waitFor(() => expect(within(breadcrumb()).queryByText('docs')).not.toBeInTheDocument())
+    await waitFor(() => expect(router.state.location.pathname).toBe('/'))
+    expect(await tree.findByText('readme.md')).toBeInTheDocument()
+    expect(within(breadcrumb()).queryByText('docs')).not.toBeInTheDocument()
+  })
+
+  it('restores a folder from the path', async () => {
+    renderWithProviders(<ExplorerPage />, { initialUrl: '/folders/id-1' })
+
+    expect(await tree.findByText('inside.txt')).toBeInTheDocument()
+    expect(tree.queryByText('readme.md')).not.toBeInTheDocument()
+    expect(await within(breadcrumb()).findByText('docs')).toBeInTheDocument()
+    expect(api.ancestors).toHaveBeenCalledWith('id-1', expect.anything())
   })
 
   it('does nothing when a file is clicked', async () => {
@@ -159,7 +173,7 @@ describe('ExplorerPage create modal', () => {
   it('names the selected folder as the target', async () => {
     const user = userEvent.setup()
     renderWithProviders(<ExplorerPage />)
-    await user.click(await tree.findByText('docs'))
+    await user.dblClick(await tree.findByText('docs'))
     await tree.findByText('inside.txt')
 
     await openCreateModal(user)
@@ -170,7 +184,7 @@ describe('ExplorerPage create modal', () => {
   it('creates a folder in the selected folder, closes, and shows it in the tree', async () => {
     const user = userEvent.setup()
     renderWithProviders(<ExplorerPage />)
-    await user.click(await tree.findByText('docs'))
+    await user.dblClick(await tree.findByText('docs'))
     await tree.findByText('inside.txt')
 
     await createThroughModal(user, 'sub')
@@ -180,14 +194,25 @@ describe('ExplorerPage create modal', () => {
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
   })
 
-  it('creates a file at the top level', async () => {
+  it('does not let you create a file in All items', async () => {
     const user = userEvent.setup()
     renderWithProviders(<ExplorerPage />)
     await tree.findByText('readme.md')
+    const modal = await openCreateModal(user)
+
+    expect(modal.getByRole('radio', { name: 'File' })).toBeDisabled()
+    expect(modal.getByText('Files can only be created inside a folder.')).toBeInTheDocument()
+  })
+
+  it('creates a file in the selected folder', async () => {
+    const user = userEvent.setup()
+    renderWithProviders(<ExplorerPage />)
+    await user.dblClick(await tree.findByText('docs'))
+    await tree.findByText('inside.txt')
 
     await createThroughModal(user, 'notes.txt', 'File')
 
-    expect(api.createFile).toHaveBeenCalledWith('notes.txt', null)
+    expect(api.createFile).toHaveBeenCalledWith('notes.txt', 'id-1')
     expect(await tree.findByText('notes.txt')).toBeInTheDocument()
   })
 
@@ -259,7 +284,8 @@ describe('ExplorerPage name validation before calling the backend', () => {
   it('requires an extension for files, but not for folders', async () => {
     const user = userEvent.setup()
     renderWithProviders(<ExplorerPage />)
-    await tree.findByText('readme.md')
+    await user.dblClick(await tree.findByText('docs'))
+    await tree.findByText('inside.txt')
     const modal = await openCreateModal(user)
 
     await user.click(modal.getByRole('radio', { name: 'File' }))
@@ -277,7 +303,8 @@ describe('ExplorerPage name validation before calling the backend', () => {
   it('shows no error until Create is pressed, even after using the Folder/File toggle', async () => {
     const user = userEvent.setup()
     renderWithProviders(<ExplorerPage />)
-    await tree.findByText('readme.md')
+    await user.dblClick(await tree.findByText('docs'))
+    await tree.findByText('inside.txt')
     const modal = await openCreateModal(user)
 
     await user.click(modal.getByRole('radio', { name: 'File' }))
@@ -305,7 +332,8 @@ describe('ExplorerPage name validation before calling the backend', () => {
   it('does not judge a file name before Create is pressed', async () => {
     const user = userEvent.setup()
     renderWithProviders(<ExplorerPage />)
-    await tree.findByText('readme.md')
+    await user.dblClick(await tree.findByText('docs'))
+    await tree.findByText('inside.txt')
     const modal = await openCreateModal(user)
 
     await user.type(modal.getByLabelText('Name'), 'report')
@@ -333,52 +361,65 @@ describe('ExplorerPage name validation before calling the backend', () => {
 })
 
 describe('ExplorerPage delete', () => {
+  const confirmDelete = async (user: UserEvent) => {
+    const modal = within(await screen.findByRole('dialog'))
+    await user.click(modal.getByRole('button', { name: 'Delete' }))
+  }
+
   it('deletes a file after confirmation and refreshes the tree', async () => {
-    vi.spyOn(window, 'confirm').mockReturnValue(true)
     const user = userEvent.setup()
     renderWithProviders(<ExplorerPage />)
     await tree.findByText('readme.md')
 
     await user.click(screen.getByRole('button', { name: 'Delete readme.md' }))
 
-    expect(window.confirm).toHaveBeenCalledWith('Delete file "readme.md"?')
+    const modal = within(await screen.findByRole('dialog'))
+    expect(screen.getByRole('dialog')).toHaveTextContent('Delete file "readme.md"')
+    expect(modal.getByText('This will permanently delete "readme.md".')).toBeInTheDocument()
+    await user.click(modal.getByRole('button', { name: 'Delete' }))
+
     expect(api.remove).toHaveBeenCalledWith('id-2')
     await waitFor(() => expect(tree.queryByText('readme.md')).not.toBeInTheDocument())
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
   })
 
   it('warns that deleting a folder deletes its content, and does nothing if cancelled', async () => {
-    vi.spyOn(window, 'confirm').mockReturnValue(false)
     const user = userEvent.setup()
     renderWithProviders(<ExplorerPage />)
     await tree.findByText('readme.md')
 
     await user.click(screen.getByRole('button', { name: 'Delete docs' }))
 
-    expect(window.confirm).toHaveBeenCalledWith('Delete folder "docs" and everything inside it?')
+    const modal = within(await screen.findByRole('dialog'))
+    expect(screen.getByRole('dialog')).toHaveTextContent('Delete folder "docs"')
+    expect(modal.getByText('This will also delete all items inside "docs".')).toBeInTheDocument()
+    await user.click(modal.getByRole('button', { name: 'Cancel' }))
+
     expect(api.remove).not.toHaveBeenCalled()
     expect(tree.getByText('docs')).toBeInTheDocument()
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
   })
 
   it('does not open or close the folder when its Delete button is clicked', async () => {
-    vi.spyOn(window, 'confirm').mockReturnValue(false)
     const user = userEvent.setup()
     renderWithProviders(<ExplorerPage />)
     await tree.findByText('readme.md')
 
     await user.click(screen.getByRole('button', { name: 'Delete docs' }))
 
+    expect(await screen.findByRole('dialog')).toBeInTheDocument()
     expect(tree.queryByText('inside.txt')).not.toBeInTheDocument()
     expect(api.list).toHaveBeenCalledTimes(1)
   })
 
   it('removes an opened folder with its content, and returns the breadcrumb to All items', async () => {
-    vi.spyOn(window, 'confirm').mockReturnValue(true)
     const user = userEvent.setup()
     renderWithProviders(<ExplorerPage />)
     await user.click(await tree.findByText('docs'))
     await tree.findByText('inside.txt')
 
     await user.click(screen.getByRole('button', { name: 'Delete docs' }))
+    await confirmDelete(user)
 
     await waitFor(() => expect(tree.queryByText('docs')).not.toBeInTheDocument())
     expect(tree.queryByText('inside.txt')).not.toBeInTheDocument()

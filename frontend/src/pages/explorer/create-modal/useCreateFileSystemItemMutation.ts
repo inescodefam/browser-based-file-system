@@ -6,10 +6,11 @@ import { useInvalidateItemsCallback } from '../useInvalidateItemsCallback'
 export const useCreateFileSystemItemMutation = (parentId: string | null) => {
   const invalidateItems = useInvalidateItemsCallback()
   return useMutation({
-    mutationFn: ({ name, type }: { name: string; type: FileSystemItemType }) =>
-      type === 'folder'
-        ? fileSystemItemsApi.createFolder(name, parentId)
-        : fileSystemItemsApi.createFile(name, parentId),
+    mutationFn: ({ name, type }: { name: string; type: FileSystemItemType }) => {
+      if (type === 'folder') return fileSystemItemsApi.createFolder(name, parentId)
+      if (parentId === null) return Promise.reject(new Error('Files must be created in a folder'))
+      return fileSystemItemsApi.createFile(name, parentId)
+    },
     onSuccess: invalidateItems,
   })
 }
