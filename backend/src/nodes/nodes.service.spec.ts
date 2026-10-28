@@ -1,6 +1,11 @@
-import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NodeType } from './domain/node';
+import {
+  NodeAlreadyExistsError,
+  NodeNotFoundError,
+  ParentIsNotFolderError,
+  ParentNotFoundError,
+} from './domain/node.errors';
 import { InMemoryNodeRepository } from './infrastructure/in-memory-node.repository';
 import { NodesService } from './nodes.service';
 
@@ -37,11 +42,11 @@ describe('NodesService', () => {
       expect(folder.parentId).toBeNull();
     });
 
-    it('throws 409 Conflict for a duplicate name in the same folder', async () => {
+    it('throws NodeAlreadyExistsError for a duplicate name in the same folder', async () => {
       await service.createFolder({ name: 'docs' });
 
       await expect(service.createFile({ name: 'docs' })).rejects.toBeInstanceOf(
-        ConflictException,
+        NodeAlreadyExistsError,
       );
     });
 
@@ -54,21 +59,21 @@ describe('NodesService', () => {
       const rejected = results.filter((r) => r.status === 'rejected');
       expect(results.filter((r) => r.status === 'fulfilled')).toHaveLength(1);
       expect(rejected).toHaveLength(1);
-      expect(rejected[0].reason).toBeInstanceOf(ConflictException);
+      expect(rejected[0].reason).toBeInstanceOf(NodeAlreadyExistsError);
     });
 
-    it('throws 404 Not Found when the parent does not exist', async () => {
+    it('throws ParentNotFoundError when the parent does not exist', async () => {
       await expect(
         service.createFolder({ name: 'docs', parentId: 'missing-id' }),
-      ).rejects.toBeInstanceOf(NotFoundException);
+      ).rejects.toBeInstanceOf(ParentNotFoundError);
     });
 
-    it('throws 400 Bad Request when the parent is a file', async () => {
+    it('throws ParentIsNotFolderError when the parent is a file', async () => {
       const file = await service.createFile({ name: 'a.txt' });
 
       await expect(
         service.createFolder({ name: 'docs', parentId: file.id }),
-      ).rejects.toBeInstanceOf(BadRequestException);
+      ).rejects.toBeInstanceOf(ParentIsNotFolderError);
     });
   });
 
@@ -96,17 +101,17 @@ describe('NodesService', () => {
       expect(names).toEqual(['a-folder', 'z-folder', 'a.txt', 'b.txt']);
     });
 
-    it('throws 404 for an unknown folder', async () => {
+    it('throws ParentNotFoundError for an unknown folder', async () => {
       await expect(service.listChildren('missing-id')).rejects.toBeInstanceOf(
-        NotFoundException,
+        ParentNotFoundError,
       );
     });
 
-    it('throws 400 when the id belongs to a file', async () => {
+    it('throws ParentIsNotFolderError when the id belongs to a file', async () => {
       const file = await service.createFile({ name: 'a.txt' });
 
       await expect(service.listChildren(file.id)).rejects.toBeInstanceOf(
-        BadRequestException,
+        ParentIsNotFolderError,
       );
     });
   });
@@ -120,11 +125,11 @@ describe('NodesService', () => {
       await expect(service.delete(docs.id)).resolves.toBeUndefined();
 
       expect(await service.listChildren(null)).toEqual([]);
-      await expect(service.listChildren(docs.id)).rejects.toBeInstanceOf(NotFoundException);
+      await expect(service.listChildren(docs.id)).rejects.toBeInstanceOf(ParentNotFoundError);
     });
 
-    it('throws 404 for an unknown id', async () => {
-      await expect(service.delete('missing-id')).rejects.toBeInstanceOf(NotFoundException);
+    it('throws NodeNotFoundError for an unknown id', async () => {
+      await expect(service.delete('missing-id')).rejects.toBeInstanceOf(NodeNotFoundError);
     });
   });
 
@@ -157,17 +162,17 @@ describe('NodesService', () => {
       await expect(service.findFilesByName('report.pdf', null)).resolves.toEqual([]);
     });
 
-    it('throws 404 for an unknown folder', async () => {
+    it('throws ParentNotFoundError for an unknown folder', async () => {
       await expect(service.findFilesByName('x.txt', 'missing-id')).rejects.toBeInstanceOf(
-        NotFoundException,
+        ParentNotFoundError,
       );
     });
 
-    it('throws 400 when the folder is a file', async () => {
+    it('throws ParentIsNotFolderError when the folder is a file', async () => {
       const file = await service.createFile({ name: 'a.txt' });
 
       await expect(service.findFilesByName('x.txt', file.id)).rejects.toBeInstanceOf(
-        BadRequestException,
+        ParentIsNotFolderError,
       );
     });
   });

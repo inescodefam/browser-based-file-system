@@ -1,14 +1,12 @@
-import {
-  BadRequestException,
-  ConflictException,
-  Inject,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { EnvVars } from '../config/env.validation';
 import { compareByName, FileSystemNode, NodeType } from './domain/node';
-import { NodeAlreadyExistsError, ParentNotFoundError } from './domain/node.errors';
+import {
+  NodeNotFoundError,
+  ParentIsNotFolderError,
+  ParentNotFoundError,
+} from './domain/node.errors';
 import { NODE_REPOSITORY, type NodeRepository } from './domain/node.repository';
 import { CreateFileDto } from './dto/create-file.dto';
 import { CreateFolderDto } from './dto/create-folder.dto';
@@ -50,7 +48,7 @@ export class NodesService {
   async delete(id: string): Promise<void> {
     const wasDeleted = await this.repository.delete(id);
     if (!wasDeleted) {
-      throw new NotFoundException(`Node "${id}" does not exist`);
+      throw new NodeNotFoundError(id);
     }
   }
 
@@ -61,17 +59,7 @@ export class NodesService {
     const parentId = dto.parentId ?? null;
     await this.assertParentIsFolder(parentId);
 
-    try {
-      return await this.repository.create({ name: dto.name, type, parentId });
-    } catch (error) {
-      if (error instanceof NodeAlreadyExistsError) {
-        throw new ConflictException(error.message);
-      }
-      if (error instanceof ParentNotFoundError) {
-        throw new NotFoundException(error.message);
-      }
-      throw error;
-    }
+    return this.repository.create({ name: dto.name, type, parentId });
   }
 
   private async assertParentIsFolder(parentId: string | null): Promise<void> {
@@ -79,10 +67,10 @@ export class NodesService {
 
     const parent = await this.repository.findById(parentId);
     if (!parent) {
-      throw new NotFoundException(`Folder "${parentId}" does not exist`);
+      throw new ParentNotFoundError(parentId);
     }
     if (parent.type !== NodeType.FOLDER) {
-      throw new BadRequestException(`"${parent.name}" is a file, not a folder`);
+      throw new ParentIsNotFolderError(parent.id, parent.name);
     }
   }
 }

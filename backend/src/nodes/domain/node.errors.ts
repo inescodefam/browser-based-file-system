@@ -17,3 +17,20 @@ export class ParentNotFoundError extends Error {
     this.name = 'ParentNotFoundError';
   }
 }
+
+export class ParentIsNotFolderError extends Error {
+  constructor(
+    public readonly parentId: string,
+    public readonly parentName: string,
+  ) {
+    super(`"${parentName}" is a file, not a folder`);
+    this.name = 'ParentIsNotFolderError';
+  }
+}
+
+export class NodeNotFoundError extends Error {
+  constructor(public readonly nodeId: string) {
+    super(`Node "${nodeId}" does not exist`);
+    this.name = 'NodeNotFoundError';
+  }
+}
