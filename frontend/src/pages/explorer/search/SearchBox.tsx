@@ -1,10 +1,18 @@
 import { Autocomplete, Checkbox, CloseButton, Group, Loader, Stack } from '@mantine/core'
 import { useDebouncedValue } from '@mantine/hooks'
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import type { FolderRef } from '../FolderBreadcrumbs'
 import { SEARCH_DEBOUNCE_MS } from './fileSearch'
 import { useSuggestionsQuery } from './useSuggestionsQuery'
+
+const isSuggestionPick = (previous: string, next: string, suggestions: string[]) => {
+  const picked = next.trim()
+  const typed = previous.trim()
+  if (picked === '' || picked === typed || !suggestions.includes(picked)) return false
+  const typedOneMoreCharacter = picked.startsWith(typed) && picked.length === typed.length + 1
+  return !typedOneMoreCharacter
+}
 
 export const SearchBox = ({
   currentFolder,
@@ -30,25 +38,35 @@ export const SearchBox = ({
   const onlyInFolder = watch('onlyInFolder')
   const parentId = onlyInFolder && currentFolder ? currentFolder.id : undefined
   const suggestions = useSuggestionsQuery(debouncedTerm, parentId)
+  const exactName = useRef<string | undefined>(undefined)
 
   const suggestedNames = useMemo(() => [...new Set(suggestions.data?.map((file) => file.name))], [suggestions.data])
 
   const exact = (name: string) => {
     const trimmedName = name.trim()
     if (trimmedName === '') return
+    exactName.current = trimmedName
     const scoped = getValues('onlyInFolder')
     onExact(trimmedName, scoped && currentFolder ? currentFolder.id : undefined)
   }
 
   useEffect(() => {
     const trimmedTerm = term.trim()
-    const isEmptyTerm = trimmedTerm === ''
-    const isEqualDebouncedTerm = debouncedTerm.trim() === trimmedTerm
-    
-    if (isEmptyTerm || isEqualDebouncedTerm) {
-      onPrefix(trimmedTerm, parentId)
+    if (trimmedTerm === '') {
+      exactName.current = undefined
+      onPrefix('')
+      return
     }
-  }, [term, debouncedTerm, parentId, onPrefix])
+    if (exactName.current !== undefined && exactName.current !== trimmedTerm) {
+      exactName.current = undefined
+    }
+    if (debouncedTerm.trim() !== trimmedTerm) return
+    if (exactName.current === trimmedTerm) {
+      onExact(trimmedTerm, parentId)
+      return
+    }
+    onPrefix(trimmedTerm, parentId)
+  }, [term, debouncedTerm, parentId, onPrefix, onExact])
 
   return (
     <form onSubmit={handleSubmit(({ term }) => exact(term))}>
@@ -62,7 +80,10 @@ export const SearchBox = ({
               labelProps={{ fw: 500, pb: 'xs' }}
               placeholder="Start typing a file name"
               value={value}
-              onChange={onChange}
+              onChange={(next) => {
+                if (isSuggestionPick(value, next, suggestedNames)) exact(next)
+                onChange(next)
+              }}
               onOptionSubmit={exact}
               onKeyDown={(event) => {
                 if (event.key !== 'Enter') return
