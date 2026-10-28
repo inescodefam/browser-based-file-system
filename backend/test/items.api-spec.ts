@@ -5,7 +5,7 @@ import request from 'supertest';
 import { AppModule } from '../src/app.module';
 import { setupApp } from '../src/app.setup';
 
-describe('Items API (e2e)', () => {
+describe('Items API', () => {
   let app: INestApplication;
 
   beforeAll(() => {

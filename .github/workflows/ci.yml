@@ -57,8 +57,8 @@ jobs:
       - name: Unit and Postgres integration tests
         run: npm test
 
-      - name: End-to-end tests
-        run: npm run test:e2e
+      - name: API tests
+        run: npm run test:api
 
   frontend:
     name: Frontend (lint, build, test)
