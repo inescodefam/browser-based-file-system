@@ -5,6 +5,7 @@ import { fileSystemItemsApi } from '../../../api/fileSystemItems'
 import { ApiError } from '../../../api/http'
 import { installMockBackend } from '../../../test/mockBackend'
 import { renderWithProviders } from '../../../test/renderWithProviders'
+import { SEARCH_FOLDER_PARAM, SEARCH_MATCH_PARAM, SEARCH_QUERY_PARAM } from './constants'
 import { ExplorerPage } from '../ExplorerPage'
 
 vi.mock('../../../api/fileSystemItems')
@@ -49,7 +50,7 @@ describe('search box', () => {
 
     expect(api.suggest).not.toHaveBeenCalled()
     await waitFor(() => expect(api.suggest).toHaveBeenCalledTimes(1), AFTER_DEBOUNCE)
-    expect(api.suggest).toHaveBeenCalledWith('rep', null, expect.anything())
+    expect(api.suggest).toHaveBeenCalledWith('rep', undefined, expect.anything())
   })
 
   it('shows each suggested name once in the box, in the order the backend returned them', async () => {
@@ -82,7 +83,7 @@ describe('search box', () => {
 
     await new Promise((resolve) => setTimeout(resolve, 700))
     expect(api.suggest).not.toHaveBeenCalledWith('', expect.anything())
-    expect(api.suggest).not.toHaveBeenCalledWith('', null, expect.anything())
+    expect(api.suggest).not.toHaveBeenCalledWith('', undefined, expect.anything())
   })
 
   it('runs the exact-name search when a suggestion is clicked', async () => {
@@ -92,7 +93,7 @@ describe('search box', () => {
 
     await user.click(await screen.findByRole('option', { name: 'report.pdf' }, AFTER_DEBOUNCE))
 
-    expect(api.searchByName).toHaveBeenCalledWith('report.pdf', null, expect.anything())
+    expect(api.searchByName).toHaveBeenCalledWith('report.pdf', undefined, expect.anything())
     expect(await screen.findByText('Files named "report.pdf" everywhere')).toBeInTheDocument()
     expect(searchTreeNames()).toEqual(['report.pdf', 'report.pdf'])
   })
@@ -104,7 +105,7 @@ describe('search box', () => {
     await user.type(searchInput(), 'notes.txt{Enter}')
 
     expect(await screen.findByText('Files named "notes.txt" everywhere')).toBeInTheDocument()
-    expect(api.searchByName).toHaveBeenCalledWith('notes.txt', null, expect.anything())
+    expect(api.searchByName).toHaveBeenCalledWith('notes.txt', undefined, expect.anything())
     expect(searchTreeNames()).toEqual(['notes.txt'])
   })
 
@@ -171,7 +172,7 @@ describe('search box', () => {
     await user.click(await folderCheckbox())
 
     expect(await screen.findByText('Files named "report.pdf" everywhere')).toBeInTheDocument()
-    expect(api.searchByName).toHaveBeenCalledWith('report.pdf', null, expect.anything())
+    expect(api.searchByName).toHaveBeenCalledWith('report.pdf', undefined, expect.anything())
     await waitFor(() => expect(searchTreeNames()).toEqual(['report.pdf', 'report.pdf']))
   })
 
@@ -243,7 +244,10 @@ describe('search in the url', () => {
     await user.type(searchInput(), 'rep')
 
     expect(router.state.location.search).toBe('')
-    await waitFor(() => expect(router.state.location.search).toBe('?q=rep'), AFTER_DEBOUNCE)
+    await waitFor(
+      () => expect(router.state.location.search).toBe(`?${SEARCH_QUERY_PARAM}=rep`),
+      AFTER_DEBOUNCE,
+    )
   })
 
   it('writes match=exact as soon as Enter is pressed', async () => {
@@ -252,7 +256,11 @@ describe('search in the url', () => {
 
     await user.type(searchInput(), 'notes.txt{Enter}')
 
-    await waitFor(() => expect(router.state.location.search).toBe('?q=notes.txt&match=exact'))
+    await waitFor(() =>
+      expect(router.state.location.search).toBe(
+        `?${SEARCH_QUERY_PARAM}=notes.txt&${SEARCH_MATCH_PARAM}=exact`,
+      ),
+    )
   })
 
   it('writes match=exact when a suggestion is selected', async () => {
@@ -262,7 +270,11 @@ describe('search in the url', () => {
 
     await user.click(await screen.findByRole('option', { name: 'report.pdf' }, AFTER_DEBOUNCE))
 
-    await waitFor(() => expect(router.state.location.search).toBe('?q=report.pdf&match=exact'))
+    await waitFor(() =>
+      expect(router.state.location.search).toBe(
+        `?${SEARCH_QUERY_PARAM}=report.pdf&${SEARCH_MATCH_PARAM}=exact`,
+      ),
+    )
   })
 
   it('writes the selected folder into the url', async () => {
@@ -274,23 +286,27 @@ describe('search in the url', () => {
 
     expect(router.state.location.pathname).toBe('/folders/id-1')
     await waitFor(() =>
-      expect(router.state.location.search).toBe('?q=report.pdf&match=exact&in=id-1'),
+      expect(router.state.location.search).toBe(
+        `?${SEARCH_QUERY_PARAM}=report.pdf&${SEARCH_MATCH_PARAM}=exact&${SEARCH_FOLDER_PARAM}=id-1`,
+      ),
     )
   })
 
   it('restores a prefix search from the address bar', async () => {
-    renderWithProviders(<ExplorerPage />, { initialUrl: '/?q=rep' })
+    renderWithProviders(<ExplorerPage />, { initialUrl: `/?${SEARCH_QUERY_PARAM}=rep` })
 
     expect(searchInput()).toHaveValue('rep')
     expect(await screen.findByText('Files starting with "rep"')).toBeInTheDocument()
-    expect(api.suggest).toHaveBeenCalledWith('rep', null, expect.anything())
+    expect(api.suggest).toHaveBeenCalledWith('rep', undefined, expect.anything())
   })
 
   it('restores an exact search from the address bar', async () => {
-    renderWithProviders(<ExplorerPage />, { initialUrl: '/?q=notes.txt&match=exact' })
+    renderWithProviders(<ExplorerPage />, {
+      initialUrl: `/?${SEARCH_QUERY_PARAM}=notes.txt&${SEARCH_MATCH_PARAM}=exact`,
+    })
 
     expect(searchInput()).toHaveValue('notes.txt')
     expect(await screen.findByText('Files named "notes.txt" everywhere')).toBeInTheDocument()
-    expect(api.searchByName).toHaveBeenCalledWith('notes.txt', null, expect.anything())
+    expect(api.searchByName).toHaveBeenCalledWith('notes.txt', undefined, expect.anything())
   })
 })

@@ -1,7 +1,7 @@
 import { Autocomplete, Checkbox, CloseButton, Group, Loader, Stack } from '@mantine/core'
 import { useDebouncedValue } from '@mantine/hooks'
-import { useEffect } from 'react'
-import { Controller, useForm, useWatch } from 'react-hook-form'
+import { useEffect, useMemo } from 'react'
+import { Controller, useForm } from 'react-hook-form'
 import type { FolderRef } from '../FolderBreadcrumbs'
 import { SEARCH_DEBOUNCE_MS } from './fileSearch'
 import { useSuggestionsQuery } from './useSuggestionsQuery'
@@ -13,41 +13,42 @@ export const SearchBox = ({
   onPrefix,
   onExact,
 }: {
-  currentFolder: FolderRef | null
+  currentFolder?: FolderRef
   initialTerm: string
   initialOnlyInFolder: boolean
-  onPrefix: (term: string, parentId?: string | null) => void
-  onExact: (name: string, parentId: string | null) => void
+
+  onPrefix: (term: string, parentId?: string) => void
+  onExact: (name: string, parentId?: string) => void
 }) => {
-  const { control, register, handleSubmit, getValues } = useForm<{
+  const { control, register, handleSubmit, getValues, watch } = useForm<{
     term: string
     onlyInFolder: boolean
   }>({ defaultValues: { term: initialTerm, onlyInFolder: initialOnlyInFolder } })
 
-  const term = useWatch({ control, name: 'term' })
-  const onlyInFolder = useWatch({ control, name: 'onlyInFolder' })
+  const term = watch('term')
   const [debouncedTerm] = useDebouncedValue(term, SEARCH_DEBOUNCE_MS)
-  const parentId = onlyInFolder && currentFolder ? currentFolder.id : null
+  const onlyInFolder = watch('onlyInFolder')
+  const parentId = onlyInFolder && currentFolder ? currentFolder.id : undefined
   const suggestions = useSuggestionsQuery(debouncedTerm, parentId)
 
-  const suggestedNames = [...new Set(suggestions.data?.map((file) => file.name))]
-
-  useEffect(() => {
-    const typed = term.trim()
-    if (typed === '') {
-      onPrefix('')
-      return
-    }
-    if (debouncedTerm.trim() !== typed) return
-    onPrefix(typed, parentId)
-  }, [term, debouncedTerm, parentId, onPrefix])
+  const suggestedNames = useMemo(() => [...new Set(suggestions.data?.map((file) => file.name))], [suggestions.data])
 
   const exact = (name: string) => {
     const trimmedName = name.trim()
     if (trimmedName === '') return
     const scoped = getValues('onlyInFolder')
-    onExact(trimmedName, scoped && currentFolder ? currentFolder.id : null)
+    onExact(trimmedName, scoped && currentFolder ? currentFolder.id : undefined)
   }
+
+  useEffect(() => {
+    const trimmedTerm = term.trim()
+    const isEmptyTerm = trimmedTerm === ''
+    const isEqualDebouncedTerm = debouncedTerm.trim() === trimmedTerm
+    
+    if (isEmptyTerm || isEqualDebouncedTerm) {
+      onPrefix(trimmedTerm, parentId)
+    }
+  }, [term, debouncedTerm, parentId, onPrefix])
 
   return (
     <form onSubmit={handleSubmit(({ term }) => exact(term))}>
@@ -55,18 +56,18 @@ export const SearchBox = ({
         <Controller
           name="term"
           control={control}
-          render={({ field }) => (
+          render={({ field: { value, onChange } }) => (
             <Autocomplete
               label="Search files"
               placeholder="Start typing a file name"
-              value={field.value}
-              onChange={field.onChange}
+              value={value}
+              onChange={onChange}
               onOptionSubmit={exact}
               onKeyDown={(event) => {
                 if (event.key !== 'Enter') return
                 event.preventDefault()
                 event.stopPropagation()
-                exact(field.value)
+                exact(value)
               }}
               data={suggestedNames}
               filter={({ options }) => options}
@@ -74,11 +75,11 @@ export const SearchBox = ({
               rightSection={
                 <Group gap={4} wrap="nowrap">
                   {suggestions.isFetching && <Loader size="xs" />}
-                  {field.value && (
+                  {value && (
                     <CloseButton
                       aria-label="Clear search"
                       onMouseDown={(event) => event.preventDefault()}
-                      onClick={() => field.onChange('')}
+                      onClick={() => onChange('')}
                     />
                   )}
                 </Group>

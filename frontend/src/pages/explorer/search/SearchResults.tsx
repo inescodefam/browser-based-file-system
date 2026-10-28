@@ -2,7 +2,7 @@ import { Alert, Loader, Stack, Text, useTree } from '@mantine/core'
 import { useMemo } from 'react'
 import type { FileSystemItem } from '../../../api/types'
 import { FileSystemTree } from '../items-tree/FileSystemTree'
-import { filesToTreeData } from '../items-tree/filesToTreeData'
+import { filesToTreeData } from '../items-tree/utils'
 import type { FileSearch } from './fileSearch'
 
 export const SearchResults = ({
@@ -10,15 +10,16 @@ export const SearchResults = ({
   files,
   isPending,
   error,
-  onDelete,
   isDeleting,
+  onDelete,
 }: {
   search: FileSearch
   files: FileSystemItem[] | undefined
   isPending: boolean
   error: Error | null
-  onDelete: (item: FileSystemItem) => void
   isDeleting: boolean
+
+  onDelete: (item: FileSystemItem) => void
 }) => {
   const tree = useTree()
   const data = useMemo(() => filesToTreeData(files ?? []), [files])

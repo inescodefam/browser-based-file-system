@@ -63,7 +63,7 @@ describe('ExplorerPage tree', () => {
     await tree.findByText('readme.md')
 
     expect(api.list).toHaveBeenCalledTimes(1)
-    expect(api.list).toHaveBeenCalledWith(null, expect.anything())
+    expect(api.list).toHaveBeenCalledWith(undefined, expect.anything())
   })
 
   it('opens a folder in place on click, and closes it on the second click', async () => {

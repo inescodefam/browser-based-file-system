@@ -10,8 +10,10 @@ export class ApiError extends Error {
   }
 }
 
+type SupportedMethod = 'GET' | 'POST' | 'DELETE'
+
 interface RequestOptions {
-  method: 'GET' | 'POST' | 'DELETE'
+  method: SupportedMethod
   body?: unknown
   query?: Record<string, string | undefined> 
   signal?: AbortSignal 

@@ -1,44 +1,46 @@
+import { SEARCH_FOLDER_PARAM, SEARCH_MATCH_PARAM, SEARCH_QUERY_PARAM } from './constants'
+
 export const SEARCH_DEBOUNCE_MS = 500
 
 export type SearchMode = 'prefix' | 'exact'
 
-export interface FileSearch {
+export type FileSearch = {
   name: string
   mode: SearchMode
-  parentId: string | null
+  parentId?: string
 }
 
-export const parseSearchParams = (params: URLSearchParams): FileSearch | null => {
-  const name = params.get('q')?.trim() ?? ''
-  if (name === '') return null
+export const parseSearchParams = (params: URLSearchParams): FileSearch | undefined => {
+  const name = params.get(SEARCH_QUERY_PARAM)?.trim() ?? ''
+  if (name === '') return undefined
 
   return {
     name,
-    mode: params.get('match') === 'exact' ? 'exact' : 'prefix',
-    parentId: params.get('in') || null,
+    mode: params.get(SEARCH_MATCH_PARAM) === 'exact' ? 'exact' : 'prefix',
+    parentId: params.get(SEARCH_FOLDER_PARAM) || undefined,
   }
 }
 
-export const parseSearchUrl = (search: string): FileSearch | null =>
+export const parseSearchUrl = (search: string): FileSearch | undefined =>
   parseSearchParams(new URLSearchParams(search.startsWith('?') ? search.slice(1) : search))
 
 export const applySearchToParams = (
   current: URLSearchParams,
-  search: FileSearch | null,
+  search?: FileSearch,
 ): URLSearchParams => {
   const params = new URLSearchParams(current)
 
   if (!search || search.name === '') {
-    params.delete('q')
-    params.delete('match')
-    params.delete('in')
+    params.delete(SEARCH_QUERY_PARAM)
+    params.delete(SEARCH_MATCH_PARAM)
+    params.delete(SEARCH_FOLDER_PARAM)
   } else {
-    params.set('q', search.name)
-    if (search.mode === 'exact') params.set('match', 'exact')
-    else params.delete('match')
+    params.set(SEARCH_QUERY_PARAM, search.name)
+    if (search.mode === 'exact') params.set(SEARCH_MATCH_PARAM, 'exact')
+    else params.delete(SEARCH_MATCH_PARAM)
 
-    if (search.parentId) params.set('in', search.parentId)
-    else params.delete('in')
+    if (search.parentId) params.set(SEARCH_FOLDER_PARAM, search.parentId)
+    else params.delete(SEARCH_FOLDER_PARAM)
   }
 
   return params

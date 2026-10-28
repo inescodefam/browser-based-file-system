@@ -9,12 +9,12 @@ export const installMockBackend = (api: Mocked<typeof fileSystemItemsApi>) => {
   let nextId = 1
   const backend = {
     items: [] as FileSystemItem[],
-    add: (name: string, type: FileSystemItemType, parentId: string | null = null) => {
+    add: (name: string, type: FileSystemItemType, parentId?: string) => {
       const item: FileSystemItem = {
         id: `id-${nextId++}`,
         name,
         type,
-        parentId,
+        parentId: parentId ?? null,
         createdAt: '2026-10-28T10:00:00.000Z',
       }
       backend.items.push(item)
@@ -30,7 +30,7 @@ export const installMockBackend = (api: Mocked<typeof fileSystemItemsApi>) => {
   }
 
   api.list.mockImplementation(async (parentId) =>
-    backend.items.filter((item) => item.parentId === (parentId ?? null)),
+    backend.items.filter((item) => (item.parentId ?? undefined) === parentId),
   )
   api.ancestors.mockImplementation(async (folderId) => {
     const folder = backend.items.find((item) => item.id === folderId)
@@ -40,13 +40,13 @@ export const installMockBackend = (api: Mocked<typeof fileSystemItemsApi>) => {
     let current: FileSystemItem | undefined = folder
     while (current) {
       chain.unshift(current)
-      const parentId: string | null = current.parentId
+      const parentId: string | undefined = current.parentId ?? undefined
       current = parentId ? backend.items.find((item) => item.id === parentId) : undefined
     }
     return chain
   })
   api.createFolder.mockImplementation(async (name, parentId) =>
-    backend.add(name, 'folder', parentId ?? null),
+    backend.add(name, 'folder', parentId),
   )
   api.createFile.mockImplementation(async (name, parentId) =>
     backend.add(name, 'file', parentId),
