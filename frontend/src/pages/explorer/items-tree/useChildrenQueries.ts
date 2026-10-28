@@ -1,9 +1,9 @@
 import { useQueries, type UseQueryResult } from '@tanstack/react-query'
-import { childrenQueryOptions } from '../../../api/childrenQueryOptions'
+import { childrenQueryOptions } from './childrenQueryOptions'
 import type { FileSystemItem } from '../../../api/types'
-import { folderKey, type ChildrenByFolder } from './childrenByFolder'
+import { folderKey, type ChildrenByFolder } from './utils'
 
-type FolderChildren = { folderId: string | null; items: FileSystemItem[] }
+type FolderChildren = { folderId?: string; items: FileSystemItem[] }
 
 const combineResults = (results: UseQueryResult<FolderChildren>[]) => ({
   childrenByFolder: Object.fromEntries(
@@ -12,10 +12,10 @@ const combineResults = (results: UseQueryResult<FolderChildren>[]) => ({
     ),
   ) as ChildrenByFolder,
   isListingPending: results[0]?.isPending ?? false,
-  listingError: results[0]?.error ?? null,
+  listingError: results[0]?.error,
 })
 
-export const useChildrenQueries = (folderIds: (string | null)[]) =>
+export const useChildrenQueries = (folderIds: (string | undefined)[]) =>
   useQueries({
     queries: folderIds.map((folderId) => ({
       ...childrenQueryOptions(folderId),

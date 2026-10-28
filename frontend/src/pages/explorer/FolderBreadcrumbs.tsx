@@ -1,25 +1,30 @@
 import { Anchor, Breadcrumbs, Text } from '@mantine/core'
 import type { FileSystemItem } from '../../api/types'
+import { useMemo } from 'react'
 
 export type FolderRef = Pick<FileSystemItem, 'id' | 'name'>
+
+type Crumb = { label: string, depth: number }
+
+const ALL_ITEMS_CRUMB: Crumb = { label: 'All items', depth: 0 }
 
 export const FolderBreadcrumbs = ({
   path,
   onNavigate,
 }: {
   path: FolderRef[]
+
   onNavigate: (depth: number) => void
 }) => {
-  const crumbs = [
-    { label: 'All items', depth: 0 },
-    ...path.map((folder, index) => ({ label: folder.name, depth: index + 1 })),
-  ]
-  const currentDepth = path.length
-
+  const crumbs = useMemo<Crumb[]>(() => [
+      ALL_ITEMS_CRUMB,
+      ...path.map((folder, index) => ({ label: folder.name, depth: index + 1 })),
+    ], [path])
+    
   return (
     <Breadcrumbs role="navigation" aria-label="Breadcrumb">
       {crumbs.map(({ label, depth }) =>
-        depth === currentDepth ? (
+        depth === path.length ? (
           <Text key={depth} fw={600}>
             {label}
           </Text>

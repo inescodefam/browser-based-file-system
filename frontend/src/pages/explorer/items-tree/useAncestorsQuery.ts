@@ -2,9 +2,9 @@ import { useQuery } from '@tanstack/react-query'
 import { fileSystemItemsApi } from '../../../api/fileSystemItems'
 import { queryKeys } from '../../../api/queryKeys'
 
-export const useAncestorsQuery = (folderId: string | null) =>
+export const useAncestorsQuery = (folderId: string | undefined) =>
   useQuery({
     queryKey: queryKeys.ancestors(folderId ?? ''),
     queryFn: ({ signal }) => fileSystemItemsApi.ancestors(folderId!, signal),
-    enabled: folderId !== null,
+    enabled: folderId !== undefined,
   })

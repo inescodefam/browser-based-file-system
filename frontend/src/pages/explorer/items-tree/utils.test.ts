@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { FileSystemItem } from '../../../api/types'
-import { buildTreeData } from './buildTreeData'
+import { buildTreeData, collectFolderIds, getFolderPath } from './utils'
 
 const item = (
   id: string,
@@ -64,5 +64,55 @@ describe('buildTreeData', () => {
 
     expect(data.map((node) => node.label)).toEqual(['a', 'top.txt'])
     expect(data[0].children?.[0].children?.[0].label).toBe('z.txt')
+  })
+})
+
+describe('collectFolderIds', () => {
+  const folder = (id: string, parentId: string | null): FileSystemItem =>
+    item(id, id, 'folder', parentId)
+  const file = (id: string, parentId: string | null): FileSystemItem => item(id, id, 'file', parentId)
+
+  it('returns the folder itself and every folder below it, but no files', () => {
+    const childrenByFolder = {
+      'top-level': [folder('a', null)],
+      a: [folder('b', 'a'), file('f1', 'a')],
+      b: [folder('c', 'b'), file('f2', 'b')],
+    }
+
+    expect(collectFolderIds('a', childrenByFolder)).toEqual(['a', 'b', 'c'])
+  })
+
+  it('returns just the folder when its content was never loaded', () => {
+    expect(collectFolderIds('a', {})).toEqual(['a'])
+  })
+})
+
+describe('getFolderPath', () => {
+  const folder = (id: string, name: string, parentId: string | null): FileSystemItem =>
+    item(id, name, 'folder', parentId)
+  const byId = (...items: FileSystemItem[]) => new Map(items.map((entry) => [entry.id, entry]))
+
+  it('is empty for the top level', () => {
+    expect(getFolderPath(undefined, byId(folder('a', 'a', null)))).toEqual([])
+  })
+
+  it('lists the folders from the top down to the selected one', () => {
+    const items = byId(folder('a', 'docs', null), folder('b', 'reports', 'a'), folder('c', '2026', 'b'))
+
+    expect(getFolderPath('c', items)).toEqual([
+      { id: 'a', name: 'docs' },
+      { id: 'b', name: 'reports' },
+      { id: 'c', name: '2026' },
+    ])
+  })
+
+  it('is empty when the selected folder is not known (e.g. it was deleted)', () => {
+    expect(getFolderPath('gone', byId(folder('a', 'docs', null)))).toEqual([])
+  })
+
+  it('stops at the first ancestor that is not known', () => {
+    const items = byId(folder('c', '2026', 'b'))
+
+    expect(getFolderPath('c', items)).toEqual([{ id: 'c', name: '2026' }])
   })
 })
