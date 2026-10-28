@@ -177,6 +177,7 @@ describe('ExplorerPage tree', () => {
     await user.click(docsRow)
 
     expect(await tree.findByText('Folder "id-1" does not exist')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Return to All files' })).toBeInTheDocument()
   })
 
   it('shows an error when the top level cannot be loaded', async () => {

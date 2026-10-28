@@ -1,6 +1,7 @@
 import { Alert, Loader, Stack, Text, useTree } from '@mantine/core'
 import { useMemo } from 'react'
 import type { FileSystemItem } from '../../../api/types'
+import { ReturnToAllFilesLink } from '../ReturnToAllFilesLink'
 import { FileSystemTree } from '../items-tree/FileSystemTree'
 import { filesToTreeData } from '../items-tree/utils'
 import type { FileSearch } from './fileSearch'
@@ -34,7 +35,14 @@ export const SearchResults = ({
     <Stack gap="xs">
       <Text fw={600}>{title}</Text>
       {isPending && <Loader size="sm" />}
-      {error && <Alert color="red">{error.message}</Alert>}
+      {error && (
+        <Alert color="red">
+          <Stack gap="xs">
+            <span>{error.message}</span>
+            <ReturnToAllFilesLink />
+          </Stack>
+        </Alert>
+      )}
       {files?.length === 0 && (
         <Text c="dimmed">
           {search.mode === 'exact'

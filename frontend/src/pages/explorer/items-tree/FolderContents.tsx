@@ -51,14 +51,10 @@ export const FolderContents = ({
       {isListingPending && <Loader size="sm" />}
       {listingError && (
         <Alert color="red" title="Could not load your files">
-          {folderId ? (
-            <Stack gap="xs">
-              <span>{listingError.message}</span>
-              <ReturnToAllFilesLink />
-            </Stack>
-          ) : (
-            listingError.message
-          )}
+          <Stack gap="xs">
+            <span>{listingError.message}</span>
+            {folderId && <ReturnToAllFilesLink />}
+          </Stack>
         </Alert>
       )}
       {listing?.length === 0 && <Text c="dimmed">No items yet.</Text>}
