@@ -32,6 +32,7 @@ export const FileSystemTree = ({
     data={data}
     tree={tree}
     selectOnClick
+    styles={{ node: { cursor: 'default' } }}
     renderNode={({ node, expanded, hasChildren, loadError, elementProps }) => {
       const item = node.nodeProps?.item as FileSystemItem
       const isFolder = item.type === 'folder'
@@ -39,6 +40,7 @@ export const FileSystemTree = ({
       return (
         <Stack
           {...elementProps}
+          style={{ ...elementProps.style, cursor: isFolder ? 'pointer' : 'default' }}
           onClick={isFolder ? elementProps.onClick : undefined}
           onDoubleClick={
             isFolder && onOpenFolder
