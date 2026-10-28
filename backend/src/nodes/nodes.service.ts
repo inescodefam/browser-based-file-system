@@ -41,8 +41,24 @@ export class NodesService {
     return this.repository.findFilesByExactName(name, folderId);
   }
 
-  suggestFiles(prefix: string): Promise<FileSystemNode[]> {
-    return this.repository.findFilesByPrefix(prefix, this.config.get('SEARCH_LIMIT', { infer: true }));
+  async suggestFiles(prefix: string, folderId: string | null = null): Promise<FileSystemNode[]> {
+    await this.assertParentIsFolder(folderId);
+    return this.repository.findFilesByPrefix(
+      prefix,
+      this.config.get('SEARCH_LIMIT', { infer: true }),
+      folderId,
+    );
+  }
+
+  async getAncestors(id: string): Promise<FileSystemNode[]> {
+    const node = await this.repository.findById(id);
+    if (!node) {
+      throw new NodeNotFoundError(id);
+    }
+    if (node.type !== NodeType.FOLDER) {
+      throw new ParentIsNotFolderError(node.id, node.name);
+    }
+    return this.repository.findAncestors(id);
   }
 
   async delete(id: string): Promise<void> {

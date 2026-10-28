@@ -29,6 +29,18 @@ export class NodesController {
     return this.nodesService.listChildren(query.parentId ?? null);
   }
 
+  @Get(':id/ancestors')
+  @ApiOperation({
+    summary: 'List the folders from the top level down to this folder',
+    description: 'Includes the folder itself. Used for breadcrumbs.',
+  })
+  @ApiOkResponse({ type: [NodeResponseDto] })
+  @ApiBadRequestResponse({ description: 'id is not a valid UUID, or the id belongs to a file' })
+  @ApiNotFoundResponse({ description: 'Folder does not exist' })
+  getAncestors(@Param('id', ParseUUIDPipe) id: string): Promise<FileSystemNode[]> {
+    return this.nodesService.getAncestors(id);
+  }
+
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({

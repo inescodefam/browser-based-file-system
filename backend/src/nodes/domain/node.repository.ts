@@ -18,7 +18,9 @@ export interface NodeRepository {
 
   findFilesByExactName(name: string, folderId: string | null): Promise<FileSystemNode[]>;
 
-  findFilesByPrefix(prefix: string, limit: number): Promise<FileSystemNode[]>;
+  findFilesByPrefix(prefix: string, limit: number, folderId: string | null): Promise<FileSystemNode[]>;
+
+  findAncestors(id: string): Promise<FileSystemNode[]>;
 }
 
 export const NODE_REPOSITORY = Symbol('NODE_REPOSITORY');
