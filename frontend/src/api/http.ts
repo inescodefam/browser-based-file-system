@@ -11,14 +11,24 @@ export class ApiError extends Error {
 }
 
 interface RequestOptions {
-  method?: 'GET' | 'POST' | 'DELETE'
+  method: 'GET' | 'POST' | 'DELETE'
   body?: unknown
   query?: Record<string, string | undefined> 
   signal?: AbortSignal 
 }
 
-export async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
-  const { method = 'GET', body, query = {}, signal } = options
+const readErrorMessage = async (response: Response): Promise<string> => {
+  try {
+    const { message } = (await response.json()) as { message?: string | string[] }
+    if (Array.isArray(message)) return message.join('. ')
+    if (message) return message
+  } catch {
+  }
+  return `Request failed (${response.status})`
+}
+
+export const request = async <T>(path: string, options: RequestOptions): Promise<T> => {
+  const { method, body, query = {}, signal } = options
 
   const url = new URL(path, API_URL)
   for (const [key, value] of Object.entries(query)) {
@@ -36,18 +46,7 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
     throw new ApiError(response.status, await readErrorMessage(response))
   }
   if (response.status === 204) {
-    return undefined as T 
+    return undefined as T
   }
   return (await response.json()) as T
-}
-
-async function readErrorMessage(response: Response): Promise<string> {
-  try {
-    const { message } = (await response.json()) as { message?: string | string[] }
-    if (Array.isArray(message)) return message.join('. ')
-    if (message) return message
-  } catch {
-    // __TODO__: The backend should always answer JSON, fix that in the backend.
-  }
-  return `Request failed (${response.status})`
 }

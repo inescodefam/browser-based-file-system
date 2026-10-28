@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { ApiError, request } from './http'
 
-function mockFetch(response: Response) {
+const mockFetch = (response: Response) => {
   const fetchMock = vi.fn().mockResolvedValue(response)
   vi.stubGlobal('fetch', fetchMock)
   return fetchMock

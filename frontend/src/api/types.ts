@@ -1,9 +1,10 @@
-export type NodeType = 'file' | 'folder'
+export type FileSystemItemType = 'file' | 'folder'
 
-export interface FileSystemNode {
+/** Same shape the backend returns (see NodeResponseDto in Swagger). */
+export interface FileSystemItem {
   id: string
   name: string
-  type: NodeType
-  parentId: string | null 
-  createdAt: string 
+  type: FileSystemItemType
+  parentId: string | null // null = top level
+  createdAt: string // ISO date
 }
