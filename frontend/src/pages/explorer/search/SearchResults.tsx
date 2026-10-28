@@ -33,7 +33,7 @@ export const SearchResults = ({
 
   return (
     <Stack gap="xs">
-      <Text fw={600}>{title}</Text>
+      <Text fw={500} size="sm">{title}</Text>
       {isPending && <Loader size="sm" />}
       {error && (
         <Alert color="red">

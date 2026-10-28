@@ -28,11 +28,19 @@ export const FolderBreadcrumbs = ({
       {crumbs.map(({ label, depth }) => {
         const isCurrent = isRoot ? depth === 0 : depth === path.length && path.length > 0
         return isCurrent ? (
-          <Text key={depth} fw={600}>
+          <Text key={depth} fw={500} size="sm" lh={1.55}>
             {label}
           </Text>
         ) : (
-          <Anchor key={depth} component="button" type="button" onClick={() => onNavigate(depth)}>
+          <Anchor
+            key={depth}
+            component="button"
+            type="button"
+            fw={500}
+            size="sm"
+            lh={1.55}
+            onClick={() => onNavigate(depth)}
+          >
             {label}
           </Anchor>
         )

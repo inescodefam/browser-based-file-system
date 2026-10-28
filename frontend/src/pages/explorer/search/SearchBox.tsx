@@ -59,6 +59,7 @@ export const SearchBox = ({
           render={({ field: { value, onChange } }) => (
             <Autocomplete
               label="Search files"
+              labelProps={{ fw: 500, pb: 'xs' }}
               placeholder="Start typing a file name"
               value={value}
               onChange={onChange}
