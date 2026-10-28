@@ -4,13 +4,15 @@ import { plainToInstance } from 'class-transformer';
 import { useContainer, validate } from 'class-validator';
 import { CreateFileDto } from './create-file.dto';
 import { CreateFolderDto } from './create-folder.dto';
+import {
+  FILE_EXTENSION_MESSAGE,
+  NAME_CHARS_MESSAGE,
+} from './decorators/item-fields.decorators';
 import { NameMaxLengthConstraint } from './decorators/name-max-length.constraint';
 
 const MAX_LENGTH = 10;
 const VALID_UUID = '3f1c2a8e-5b7d-4c1e-9a2b-6d8f0e1a2b3c';
 
-const FORBIDDEN_CHARS_MESSAGE = 'Name must not contain "/" or "\\" and must not be "." or ".."';
-const EXTENSION_MESSAGE = 'File name must have an extension, e.g. "report.pdf"';
 const MAX_LENGTH_MESSAGE = `Name must be at most ${MAX_LENGTH} characters long.`;
 
 async function errorsFor<T extends object>(
@@ -48,8 +50,15 @@ describe('create item DTOs', () => {
       ).resolves.toEqual([]);
     });
 
-    it('does not require an extension for folders', async () => {
-      await expect(errorsFor(CreateFolderDto, { name: 'v1.2' })).resolves.toEqual([]);
+    it('accepts hyphens and spaces, and does not require an extension', async () => {
+      await expect(errorsFor(CreateFolderDto, { name: 'folder-1' })).resolves.toEqual([]);
+      await expect(errorsFor(CreateFolderDto, { name: 'my docs' })).resolves.toEqual([]);
+    });
+
+    it('rejects a dot in a folder name', async () => {
+      await expect(errorsFor(CreateFolderDto, { name: 'v1.2' })).resolves.toContain(
+        NAME_CHARS_MESSAGE,
+      );
     });
 
     it('trims surrounding whitespace', () => {
@@ -62,11 +71,12 @@ describe('create item DTOs', () => {
       expect((await errorsFor(CreateFolderDto, { name })).length).toBeGreaterThan(0);
     });
 
-    it.each(['a/b', 'a\\b', '.', '..'])('rejects the forbidden name %j', async (name) => {
-      await expect(errorsFor(CreateFolderDto, { name })).resolves.toContain(
-        FORBIDDEN_CHARS_MESSAGE,
-      );
-    });
+    it.each(['a/b', 'a\\b', '.', '..', "folder's", 'folder"1"', 'folder{1}'])(
+      'rejects the forbidden name %j',
+      async (name) => {
+        await expect(errorsFor(CreateFolderDto, { name })).resolves.toContain(NAME_CHARS_MESSAGE);
+      },
+    );
 
     it('enforces NAME_MAX_LENGTH', async () => {
       await expect(
@@ -96,24 +106,27 @@ describe('create item DTOs', () => {
   });
 
   describe('CreateFileDto', () => {
-    it.each(['report.pdf', 'a.tar.gz', 'IMG.JPG'])('accepts %j', async (name) => {
+    it.each(['report.pdf', 'note-1.txt', 'IMG.JPG'])('accepts %j', async (name) => {
       await expect(errorsFor(CreateFileDto, { name, parentId: VALID_UUID })).resolves.toEqual([]);
     });
 
-    it.each(['report', 'report.', '.env', 'a.toolongextension', 'a.p df'])(
+    it.each(['report', 'report.', 'a.toolongextension'])(
       'rejects %j because it has no valid extension',
       async (name) => {
         await expect(
           errorsFor(CreateFileDto, { name, parentId: VALID_UUID }),
-        ).resolves.toContain(EXTENSION_MESSAGE);
+        ).resolves.toContain(FILE_EXTENSION_MESSAGE);
       },
     );
 
-    it('applies the shared name rules too', async () => {
-      await expect(
-        errorsFor(CreateFileDto, { name: 'a/b.txt', parentId: VALID_UUID }),
-      ).resolves.toContain(FORBIDDEN_CHARS_MESSAGE);
-    });
+    it.each(['a/b.txt', "f'.txt", 'f{1}.txt', 'a.tar.gz', '.env'])(
+      'rejects the forbidden file name %j',
+      async (name) => {
+        await expect(
+          errorsFor(CreateFileDto, { name, parentId: VALID_UUID }),
+        ).resolves.toContain(NAME_CHARS_MESSAGE);
+      },
+    );
 
     it('requires a parent folder', async () => {
       expect((await errorsFor(CreateFileDto, { name: 'a.txt' })).length).toBeGreaterThan(0);

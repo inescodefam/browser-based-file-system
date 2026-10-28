@@ -58,7 +58,9 @@ describe('Items API', () => {
     it('returns 400 for an invalid name', async () => {
       const res = await http().post('/folders').send({ name: 'a/b' }).expect(400);
 
-      expect(res.body.message).toEqual(expect.arrayContaining([expect.stringContaining('"/"')]));
+      expect(res.body.message).toEqual(
+        expect.arrayContaining([expect.stringContaining('letters, numbers, spaces and hyphens')]),
+      );
     });
 
     it('returns 400 for unknown properties', async () => {

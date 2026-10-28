@@ -1,7 +1,7 @@
-import { ItemName, ParentId } from './decorators/item-fields.decorators';
+import { FolderName, ParentId } from './decorators/item-fields.decorators';
 
 export class CreateFolderDto {
-  @ItemName()
+  @FolderName()
   name!: string;
 
   @ParentId()

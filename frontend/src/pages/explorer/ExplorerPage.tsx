@@ -7,6 +7,7 @@ import { FolderContents } from './items-tree/FolderContents'
 import { CreateFileSystemItemModal } from './modals/create-modal/CreateFileSystemItemModal'
 import { DeleteFileSystemItemModal } from './modals/delete-modal/DeleteFileSystemItemModal'
 import { FolderBreadcrumbs } from './FolderBreadcrumbs'
+import { ReturnToAllFilesLink } from './ReturnToAllFilesLink'
 import { SearchBox } from './search/SearchBox'
 import { SearchResults } from './search/SearchResults'
 import { applySearchToParams, parseSearchParams } from './search/fileSearch'
@@ -85,7 +86,11 @@ export const ExplorerPage = () => {
       />
 
       <Group justify="space-between">
-        <FolderBreadcrumbs path={path} onNavigate={(depth) => navigateToFolder(path[depth - 1]?.id)} />
+        <FolderBreadcrumbs
+          path={path}
+          isRoot={folderIdParam === undefined}
+          onNavigate={(depth) => navigateToFolder(path[depth - 1]?.id)}
+        />
         <Button onClick={openCreate}>Create</Button>
       </Group>
       <CreateFileSystemItemModal opened={createOpened} onClose={closeCreate} parent={currentFolder} />
@@ -109,7 +114,10 @@ export const ExplorerPage = () => {
           {ancestors.isPending && folderIdParam && <Loader size="sm" />}
           {ancestors.error && (
             <Alert color="red" title="Could not open this folder">
-              {ancestors.error.message}
+              <Stack gap="xs">
+                <span>{ancestors.error.message}</span>
+                <ReturnToAllFilesLink />
+              </Stack>
             </Alert>
           )}
           {(folderIdParam === undefined || ancestors.data) && (

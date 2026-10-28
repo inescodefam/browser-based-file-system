@@ -10,9 +10,11 @@ const ALL_ITEMS_CRUMB: Crumb = { label: 'All items', depth: 0 }
 
 export const FolderBreadcrumbs = ({
   path,
+  isRoot,
   onNavigate,
 }: {
   path: FolderRef[]
+  isRoot: boolean
 
   onNavigate: (depth: number) => void
 }) => {
@@ -23,8 +25,9 @@ export const FolderBreadcrumbs = ({
     
   return (
     <Breadcrumbs role="navigation" aria-label="Breadcrumb">
-      {crumbs.map(({ label, depth }) =>
-        depth === path.length ? (
+      {crumbs.map(({ label, depth }) => {
+        const isCurrent = isRoot ? depth === 0 : depth === path.length && path.length > 0
+        return isCurrent ? (
           <Text key={depth} fw={600}>
             {label}
           </Text>
@@ -32,8 +35,8 @@ export const FolderBreadcrumbs = ({
           <Anchor key={depth} component="button" type="button" onClick={() => onNavigate(depth)}>
             {label}
           </Anchor>
-        ),
-      )}
+        )
+      })}
     </Breadcrumbs>
   )
 }

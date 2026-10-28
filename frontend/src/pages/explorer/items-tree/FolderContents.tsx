@@ -1,9 +1,10 @@
-import { Alert, Loader, Text, useTree } from '@mantine/core'
+import { Alert, Loader, Stack, Text, useTree } from '@mantine/core'
 import { useQueryClient } from '@tanstack/react-query'
 import { useMemo, useState } from 'react'
 import { childrenQueryOptions } from './childrenQueryOptions'
 import type { FileSystemItem } from '../../../api/types'
 import { buildTreeData, collectFolderIds, folderKey } from './utils'
+import { ReturnToAllFilesLink } from '../ReturnToAllFilesLink'
 import { FileSystemTree } from './FileSystemTree'
 import { useChildrenQueries } from './useChildrenQueries'
 
@@ -50,7 +51,14 @@ export const FolderContents = ({
       {isListingPending && <Loader size="sm" />}
       {listingError && (
         <Alert color="red" title="Could not load your files">
-          {listingError.message}
+          {folderId ? (
+            <Stack gap="xs">
+              <span>{listingError.message}</span>
+              <ReturnToAllFilesLink />
+            </Stack>
+          ) : (
+            listingError.message
+          )}
         </Alert>
       )}
       {listing?.length === 0 && <Text c="dimmed">No items yet.</Text>}

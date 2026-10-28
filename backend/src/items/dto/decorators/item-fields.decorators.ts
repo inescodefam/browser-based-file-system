@@ -4,30 +4,52 @@ import { Transform } from 'class-transformer';
 import { IsNotEmpty, IsOptional, IsString, IsUUID, Matches } from 'class-validator';
 import { NameMaxLength } from './name-max-length.constraint';
 
-const ITEM_NAME_PATTERN = /^(?!\.{1,2}$)[^/\\]+$/;
-const FILE_NAME_PATTERN = /^.+\.[A-Za-z0-9]{1,10}$/;
+const FOLDER_NAME_PATTERN = /^[A-Za-z0-9 -]+$/;
+const FILE_NAME_PATTERN = /^[A-Za-z0-9 -]+\.[A-Za-z0-9]{1,10}$/;
 
-export function ItemName() {
+export const NAME_CHARS_MESSAGE =
+  'Name can only contain letters, numbers, spaces and hyphens';
+export const FILE_EXTENSION_MESSAGE = 'File name must have an extension, e.g. "report.pdf"';
+
+const fileNameMessage = ({ value }: { value: unknown }): string => {
+  if (typeof value !== 'string') return FILE_EXTENSION_MESSAGE;
+  const lastDot = value.lastIndexOf('.');
+  const base = lastDot === -1 ? value : value.slice(0, lastDot);
+  if (base === '' || !FOLDER_NAME_PATTERN.test(base)) return NAME_CHARS_MESSAGE;
+  return FILE_EXTENSION_MESSAGE;
+};
+
+function TrimmedName() {
   return applyDecorators(
-    ApiProperty({ example: 'reports', description: 'Case sensitive, unique within its folder.' }),
     Transform(({ value }: { value: unknown }) =>
       typeof value === 'string' ? value.trim() : value,
     ),
     IsString(),
     IsNotEmpty(),
-    Matches(ITEM_NAME_PATTERN, {
-      message: 'Name must not contain "/" or "\\" and must not be "." or ".."',
-    }),
     NameMaxLength(),
+  );
+}
+
+export function FolderName() {
+  return applyDecorators(
+    ApiProperty({
+      example: 'reports',
+      description: 'Letters, numbers, spaces and hyphens. Case sensitive, unique within its folder.',
+    }),
+    TrimmedName(),
+    Matches(FOLDER_NAME_PATTERN, { message: NAME_CHARS_MESSAGE }),
   );
 }
 
 export function FileName() {
   return applyDecorators(
-    ItemName(),
-    Matches(FILE_NAME_PATTERN, {
-      message: 'File name must have an extension, e.g. "report.pdf"',
+    ApiProperty({
+      example: 'report.pdf',
+      description:
+        'Letters, numbers, spaces and hyphens, plus a file extension. Case sensitive, unique within its folder.',
     }),
+    TrimmedName(),
+    Matches(FILE_NAME_PATTERN, { message: fileNameMessage }),
   );
 }
 

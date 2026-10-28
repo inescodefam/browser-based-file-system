@@ -108,6 +108,35 @@ describe('ExplorerPage tree', () => {
     expect(api.ancestors).toHaveBeenCalledWith('id-1', expect.anything())
   })
 
+  it('lets the user return to All files when the folder no longer exists', async () => {
+    const user = userEvent.setup()
+    const { router } = renderWithProviders(<ExplorerPage />, {
+      initialUrl: '/folders/a08d1bb2-bb6a-45e2-98b3-05ed20d34a3d',
+    })
+
+    expect(await screen.findByText(/does not exist/)).toBeInTheDocument()
+    await user.click(screen.getByRole('link', { name: 'Return to All files' }))
+
+    expect(router.state.location.pathname).toBe('/')
+    expect(await tree.findByText('readme.md')).toBeInTheDocument()
+  })
+
+  it('lets the user return to All files when this folder can no longer be listed', async () => {
+    api.list.mockImplementation(async (parentId) => {
+      if (parentId === 'id-1') {
+        throw new ApiError(404, 'Parent folder "id-1" does not exist')
+      }
+      return backend.items.filter((item) => (item.parentId ?? undefined) === parentId)
+    })
+    const user = userEvent.setup()
+    const { router } = renderWithProviders(<ExplorerPage />, { initialUrl: '/folders/id-1' })
+
+    expect(await screen.findByText('Parent folder "id-1" does not exist')).toBeInTheDocument()
+    await user.click(screen.getByRole('link', { name: 'Return to All files' }))
+
+    expect(router.state.location.pathname).toBe('/')
+  })
+
   it('does nothing when a file is clicked', async () => {
     const user = userEvent.setup()
     renderWithProviders(<ExplorerPage />)
@@ -252,8 +281,9 @@ describe('ExplorerPage create modal', () => {
 describe('ExplorerPage name validation before calling the backend', () => {
   it.each([
     ['an empty name', '', 'Name is required'],
-    ['a name with a slash', 'a/b', 'Name must not contain'],
-    ['a dot', '..', 'Name must not contain'],
+    ['a name with a slash', 'a/b', 'Name can only contain'],
+    ['a dot', 'v1.2', 'Name can only contain'],
+    ['quotes', "folder's", 'Name can only contain'],
   ])('rejects %s without calling the backend', async (_label, name, message) => {
     const user = userEvent.setup()
     renderWithProviders(<ExplorerPage />)
