@@ -11,8 +11,8 @@ const combineResults = (results: UseQueryResult<FolderChildren>[]) => ({
       result.data ? [[folderKey(result.data.folderId), result.data.items]] : [],
     ),
   ) as ChildrenByFolder,
-  isTopLevelPending: results[0].isPending,
-  topLevelError: results[0].error,
+  isListingPending: results[0]?.isPending ?? false,
+  listingError: results[0]?.error ?? null,
 })
 
 export const useChildrenQueries = (folderIds: (string | null)[]) =>

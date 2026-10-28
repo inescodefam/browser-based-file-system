@@ -5,10 +5,13 @@ export const fileSystemItemsApi = {
   list: (parentId?: string | null, signal?: AbortSignal) =>
     request<FileSystemItem[]>('/nodes', { method: 'GET', query: { parentId: parentId ?? undefined }, signal }),
 
+  ancestors: (folderId: string, signal?: AbortSignal) =>
+    request<FileSystemItem[]>(`/nodes/${folderId}/ancestors`, { method: 'GET', signal }),
+
   createFolder: (name: string, parentId?: string | null) =>
     request<FileSystemItem>('/folders', { method: 'POST', body: { name, parentId } }),
 
-  createFile: (name: string, parentId?: string | null) =>
+  createFile: (name: string, parentId: string) =>
     request<FileSystemItem>('/files', { method: 'POST', body: { name, parentId } }),
 
   remove: (id: string) => request<void>(`/nodes/${id}`, { method: 'DELETE' }),
@@ -20,6 +23,10 @@ export const fileSystemItemsApi = {
       signal,
     }),
 
-  suggest: (prefix: string, signal?: AbortSignal) =>
-    request<FileSystemItem[]>('/files/suggestions', { method: 'GET', query: { prefix }, signal }),
+  suggest: (prefix: string, parentId?: string | null, signal?: AbortSignal) =>
+    request<FileSystemItem[]>('/files/suggestions', {
+      method: 'GET',
+      query: { prefix, parentId: parentId ?? undefined },
+      signal,
+    }),
 }

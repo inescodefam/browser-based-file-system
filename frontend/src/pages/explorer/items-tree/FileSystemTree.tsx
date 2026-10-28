@@ -14,16 +14,20 @@ import type { FileSystemItem } from '../../../api/types'
 export const FileSystemTree = ({
   data,
   tree,
+  ariaLabel = 'Files and folders',
   onDelete,
   isDeleting,
+  onOpenFolder,
 }: {
   data: TreeNodeData[]
   tree: UseTreeReturnType
+  ariaLabel?: string
   onDelete: (item: FileSystemItem) => void
   isDeleting: boolean
+  onOpenFolder?: (folder: FileSystemItem) => void
 }) => (
   <Tree
-    aria-label="Files and folders"
+    aria-label={ariaLabel}
     data={data}
     tree={tree}
     selectOnClick
@@ -35,6 +39,15 @@ export const FileSystemTree = ({
         <Group
           {...elementProps}
           onClick={isFolder ? elementProps.onClick : undefined}
+          onDoubleClick={
+            isFolder && onOpenFolder
+              ? (event) => {
+                  event.preventDefault()
+                  event.stopPropagation()
+                  onOpenFolder(item)
+                }
+              : undefined
+          }
           justify="space-between"
           wrap="nowrap"
           py={4}
@@ -73,6 +86,7 @@ export const FileSystemTree = ({
               event.stopPropagation()
               onDelete(item)
             }}
+            onDoubleClick={(event) => event.stopPropagation()}
           >
             Delete
           </Button>

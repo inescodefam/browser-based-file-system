@@ -1,7 +1,10 @@
 import type { TreeNodeData } from '@mantine/core'
 import { folderKey, type ChildrenByFolder } from './childrenByFolder'
 
-export const buildTreeData = (childrenByFolder: ChildrenByFolder): TreeNodeData[] => {
+export const buildTreeData = (
+  childrenByFolder: ChildrenByFolder,
+  rootId: string | null = null,
+): TreeNodeData[] => {
   const toNodes = (folderId: string | null): TreeNodeData[] =>
     (childrenByFolder[folderKey(folderId)] ?? []).map((item): TreeNodeData => {
       if (item.type === 'file') {
@@ -18,5 +21,5 @@ export const buildTreeData = (childrenByFolder: ChildrenByFolder): TreeNodeData[
       }
     })
 
-  return toNodes(null)
+  return toNodes(rootId)
 }

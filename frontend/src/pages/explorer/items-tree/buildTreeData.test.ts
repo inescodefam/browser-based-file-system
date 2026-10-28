@@ -14,6 +14,14 @@ describe('buildTreeData', () => {
     expect(buildTreeData({})).toEqual([])
   })
 
+  it('lists a folder’s children when that folder is the current location', () => {
+    const inside = item('f1', 'inside.txt', 'file', 'd1')
+
+    expect(buildTreeData({ d1: [inside] }, 'd1')).toEqual([
+      { value: 'f1', label: 'inside.txt', nodeProps: { item: inside } },
+    ])
+  })
+
   it('shows files as leaves', () => {
     const data = buildTreeData({ 'top-level': [item('f1', 'a.txt', 'file', null)] })
 
