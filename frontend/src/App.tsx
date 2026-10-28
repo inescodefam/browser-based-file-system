@@ -4,7 +4,7 @@ import { ExplorerPage } from './pages/explorer/ExplorerPage'
 const App = () => (
   <Container py="xl">
     <Title order={1} mb="md">
-      Browser-based file system
+      File system explorer
     </Title>
     <ExplorerPage />
   </Container>

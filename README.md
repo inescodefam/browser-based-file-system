@@ -1,6 +1,6 @@
-# Browser-based file system
+# File system explorer
 
-A simple file-system API and web UI for creating folders and files, searching them, and deleting them.
+A simple file system API and web UI for creating folders and files, searching them, and deleting them.
 
 ## Tech stack
 
