@@ -93,7 +93,9 @@ describe('search box', () => {
 
     await user.click(await screen.findByRole('option', { name: 'report.pdf' }, AFTER_DEBOUNCE))
 
-    expect(api.searchByName).toHaveBeenCalledWith('report.pdf', undefined, expect.anything())
+    await waitFor(() =>
+      expect(api.searchByName).toHaveBeenCalledWith('report.pdf', undefined, expect.anything()),
+    )
     expect(await screen.findByText('Files named "report.pdf" in all files')).toBeInTheDocument()
     expect(searchTreeNames()).toEqual(['report.pdf', 'report.pdf'])
   })
