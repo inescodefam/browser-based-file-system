@@ -24,7 +24,7 @@ export const SearchResults = ({
   const tree = useTree()
   const data = useMemo(() => filesToTreeData(files ?? []), [files])
 
-  const scope = search.parentId ? ' in the selected folder' : search.mode === 'exact' ? ' everywhere' : ''
+  const scope = search.parentId ? ' in the selected folder' : search.mode === 'exact' ? ' in all files' : ''
   const title =
     search.mode === 'exact'
       ? `Files named "${search.name}"${scope}`

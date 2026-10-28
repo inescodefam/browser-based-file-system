@@ -94,7 +94,7 @@ describe('search box', () => {
     await user.click(await screen.findByRole('option', { name: 'report.pdf' }, AFTER_DEBOUNCE))
 
     expect(api.searchByName).toHaveBeenCalledWith('report.pdf', undefined, expect.anything())
-    expect(await screen.findByText('Files named "report.pdf" everywhere')).toBeInTheDocument()
+    expect(await screen.findByText('Files named "report.pdf" in all files')).toBeInTheDocument()
     expect(searchTreeNames()).toEqual(['report.pdf', 'report.pdf'])
   })
 
@@ -104,7 +104,7 @@ describe('search box', () => {
 
     await user.type(searchInput(), 'notes.txt{Enter}')
 
-    expect(await screen.findByText('Files named "notes.txt" everywhere')).toBeInTheDocument()
+    expect(await screen.findByText('Files named "notes.txt" in all files')).toBeInTheDocument()
     expect(api.searchByName).toHaveBeenCalledWith('notes.txt', undefined, expect.anything())
     expect(searchTreeNames()).toEqual(['notes.txt'])
   })
@@ -160,7 +160,7 @@ describe('search box', () => {
     expect(searchTreeNames()).toEqual(['report.pdf'])
   })
 
-  it('shows exact matches everywhere again when the checkbox is unchecked', async () => {
+  it('shows exact matches in all files again when the checkbox is unchecked', async () => {
     const user = userEvent.setup()
     renderWithProviders(<ExplorerPage />)
     await user.dblClick(await screen.findByText('docs'))
@@ -171,7 +171,7 @@ describe('search box', () => {
 
     await user.click(await folderCheckbox())
 
-    expect(await screen.findByText('Files named "report.pdf" everywhere')).toBeInTheDocument()
+    expect(await screen.findByText('Files named "report.pdf" in all files')).toBeInTheDocument()
     expect(api.searchByName).toHaveBeenCalledWith('report.pdf', undefined, expect.anything())
     await waitFor(() => expect(searchTreeNames()).toEqual(['report.pdf', 'report.pdf']))
   })
@@ -197,7 +197,7 @@ describe('search box', () => {
     const user = userEvent.setup()
     renderWithProviders(<ExplorerPage />)
     await user.type(searchInput(), 'notes.txt{Enter}')
-    await screen.findByText('Files named "notes.txt" everywhere')
+    await screen.findByText('Files named "notes.txt" in all files')
 
     await user.clear(searchInput())
 
@@ -209,7 +209,7 @@ describe('search box', () => {
     const user = userEvent.setup()
     const { router } = renderWithProviders(<ExplorerPage />)
     await user.type(searchInput(), 'notes.txt{Enter}')
-    await screen.findByText('Files named "notes.txt" everywhere')
+    await screen.findByText('Files named "notes.txt" in all files')
 
     await user.click(screen.getByRole('button', { name: 'Clear search' }))
 
@@ -222,7 +222,7 @@ describe('search box', () => {
     const user = userEvent.setup()
     renderWithProviders(<ExplorerPage />)
     await user.type(searchInput(), 'notes.txt{Enter}')
-    await screen.findByText('Files named "notes.txt" everywhere')
+    await screen.findByText('Files named "notes.txt" in all files')
     expect(searchTreeNames()).toEqual(['notes.txt'])
 
     backend.add('notes.txt', 'file', 'id-1')
@@ -306,7 +306,7 @@ describe('search in the url', () => {
     })
 
     expect(searchInput()).toHaveValue('notes.txt')
-    expect(await screen.findByText('Files named "notes.txt" everywhere')).toBeInTheDocument()
+    expect(await screen.findByText('Files named "notes.txt" in all files')).toBeInTheDocument()
     expect(api.searchByName).toHaveBeenCalledWith('notes.txt', undefined, expect.anything())
   })
 })
