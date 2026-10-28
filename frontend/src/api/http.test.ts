@@ -22,7 +22,7 @@ describe('request', () => {
 
     expect(result).toEqual([{ id: '1' }])
     const [url, init] = fetchMock.mock.calls[0]
-    expect(String(url)).toMatch(/\/files\/search\?name=a\+b\.txt$/) // undefined parentId is left out
+    expect(String(url)).toMatch(/\/files\/search\?name=a\+b\.txt$/) 
     expect(init.method).toBe('GET')
   })
 
