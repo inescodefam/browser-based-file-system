@@ -1,6 +1,6 @@
 import { Modal } from '@mantine/core'
 import { CreateFileSystemItemForm } from './CreateFileSystemItemForm'
-import type { FolderRef } from './FolderBreadcrumbs'
+import type { FolderRef } from '../FolderBreadcrumbs'
 
 export const CreateFileSystemItemModal = ({
   opened,

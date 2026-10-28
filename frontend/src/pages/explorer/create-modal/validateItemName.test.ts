@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { NAME_MAX_LENGTH } from '../../config'
+import { NAME_MAX_LENGTH } from '../../../config'
 import { validateItemName } from './validateItemName'
 
 describe('validateItemName', () => {

@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
-import { fileSystemItemsApi } from '../../api/fileSystemItems'
-import { queryKeys } from '../../api/queryKeys'
+import { fileSystemItemsApi } from '../../../api/fileSystemItems'
+import { queryKeys } from '../../../api/queryKeys'
 
 export const useSuggestionsQuery = (prefix: string) =>
   useQuery({

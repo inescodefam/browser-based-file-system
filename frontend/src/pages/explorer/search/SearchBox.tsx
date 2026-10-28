@@ -1,7 +1,7 @@
 import { Autocomplete, Button, Checkbox, Group, Loader, Stack } from '@mantine/core'
 import { useDebouncedValue } from '@mantine/hooks'
 import { Controller, useForm, useWatch } from 'react-hook-form'
-import type { FolderRef } from './FolderBreadcrumbs'
+import type { FolderRef } from '../FolderBreadcrumbs'
 import { useSuggestionsQuery } from './useSuggestionsQuery'
 import type { FileSearch } from './useSearchQuery'
 

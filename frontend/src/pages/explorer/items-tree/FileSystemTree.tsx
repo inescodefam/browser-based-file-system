@@ -1,0 +1,83 @@
+import {
+  AccordionChevron,
+  Box,
+  Button,
+  Group,
+  Loader,
+  Text,
+  Tree,
+  type UseTreeReturnType,
+  type TreeNodeData,
+} from '@mantine/core'
+import type { FileSystemItem } from '../../../api/types'
+
+export const FileSystemTree = ({
+  data,
+  tree,
+  onDelete,
+  isDeleting,
+}: {
+  data: TreeNodeData[]
+  tree: UseTreeReturnType
+  onDelete: (item: FileSystemItem) => void
+  isDeleting: boolean
+}) => (
+  <Tree
+    aria-label="Files and folders"
+    data={data}
+    tree={tree}
+    selectOnClick
+    renderNode={({ node, expanded, hasChildren, isLoading, loadError, elementProps }) => {
+      const item = node.nodeProps?.item as FileSystemItem
+      const isFolder = item.type === 'folder'
+
+      return (
+        <Group
+          {...elementProps}
+          onClick={isFolder ? elementProps.onClick : undefined}
+          justify="space-between"
+          wrap="nowrap"
+          py={4}
+        >
+          <Group gap="xs" wrap="nowrap">
+            <Box w={16}>
+              {hasChildren && (
+                <AccordionChevron
+                  size={16}
+                  style={{ transform: expanded ? 'rotate(0deg)' : 'rotate(-90deg)' }}
+                />
+              )}
+            </Box>
+            <Text span fw={isFolder ? 600 : 400}>
+              {node.label}
+            </Text>
+            {node.nodeProps?.isEmpty && (
+              <Text span size="sm" c="dimmed">
+                (empty)
+              </Text>
+            )}
+            {isLoading && <Loader size="xs" />}
+            {loadError && (
+              <Text span size="sm" c="red">
+                {loadError.message}
+              </Text>
+            )}
+          </Group>
+          <Button
+            variant="subtle"
+            color="red"
+            size="xs"
+            disabled={isDeleting}
+            aria-label={`Delete ${item.name}`}
+            onClick={(event) => {
+              event.stopPropagation()
+              onDelete(item)
+            }}
+          >
+            Delete
+          </Button>
+        </Group>
+      )
+    }}
+  />
+)

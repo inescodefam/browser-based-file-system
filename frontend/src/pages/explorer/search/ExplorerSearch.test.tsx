@@ -1,13 +1,13 @@
 import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { fileSystemItemsApi } from '../../api/fileSystemItems'
-import { ApiError } from '../../api/http'
-import { installMockBackend } from '../../test/mockBackend'
-import { renderWithProviders } from '../../test/renderWithProviders'
-import { ExplorerPage } from './ExplorerPage'
+import { fileSystemItemsApi } from '../../../api/fileSystemItems'
+import { ApiError } from '../../../api/http'
+import { installMockBackend } from '../../../test/mockBackend'
+import { renderWithProviders } from '../../../test/renderWithProviders'
+import { ExplorerPage } from '../ExplorerPage'
 
-vi.mock('../../api/fileSystemItems')
+vi.mock('../../../api/fileSystemItems')
 const api = vi.mocked(fileSystemItemsApi)
 
 const AFTER_DEBOUNCE = { timeout: 3000 }
@@ -94,8 +94,8 @@ describe('search box', () => {
   it('can limit the search to the folder you are in', async () => {
     const user = userEvent.setup()
     renderWithProviders(<ExplorerPage />)
-    await user.click(await screen.findByRole('button', { name: 'docs' }))
-    await screen.findByText('report.pdf')
+    await user.click(await screen.findByText('docs'))
+    await screen.findByRole('checkbox', { name: 'Only search in "docs"' })
 
     await user.click(screen.getByRole('checkbox', { name: 'Only search in "docs"' }))
     await user.type(searchInput(), 'report.pdf{Enter}')

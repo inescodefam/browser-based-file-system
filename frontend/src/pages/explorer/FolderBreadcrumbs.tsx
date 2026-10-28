@@ -17,7 +17,7 @@ export const FolderBreadcrumbs = ({
   const currentDepth = path.length
 
   return (
-    <Breadcrumbs>
+    <Breadcrumbs role="navigation" aria-label="Breadcrumb">
       {crumbs.map(({ label, depth }) =>
         depth === currentDepth ? (
           <Text key={depth} fw={600}>

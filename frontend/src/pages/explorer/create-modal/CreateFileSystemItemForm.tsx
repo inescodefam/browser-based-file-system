@@ -1,6 +1,6 @@
 import { Alert, Button, Group, SegmentedControl, Stack, TextInput } from '@mantine/core'
 import { Controller, useForm, useWatch } from 'react-hook-form'
-import type { FileSystemItemType } from '../../api/types'
+import type { FileSystemItemType } from '../../../api/types'
 import { useCreateFileSystemItemMutation } from './useCreateFileSystemItemMutation'
 import { validateItemName } from './validateItemName'
 
