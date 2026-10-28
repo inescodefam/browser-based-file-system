@@ -1,46 +1,54 @@
-import { Alert, Button, Group, Loader, Stack, Table, Text } from '@mantine/core'
-import { useSearchQuery, type FileSearch } from './useSearchQuery'
+import { Alert, Loader, Stack, Text, useTree } from '@mantine/core'
+import { useMemo } from 'react'
+import type { FileSystemItem } from '../../../api/types'
+import { FileSystemTree } from '../items-tree/FileSystemTree'
+import { filesToTreeData } from '../items-tree/filesToTreeData'
+import type { FileSearch } from './fileSearch'
 
 export const SearchResults = ({
   search,
-  onClear,
+  files,
+  isPending,
+  error,
+  onDelete,
+  isDeleting,
 }: {
   search: FileSearch
-  onClear: () => void
+  files: FileSystemItem[] | undefined
+  isPending: boolean
+  error: Error | null
+  onDelete: (item: FileSystemItem) => void
+  isDeleting: boolean
 }) => {
-  const results = useSearchQuery(search)
+  const tree = useTree()
+  const data = useMemo(() => filesToTreeData(files ?? []), [files])
+
+  const scope = search.parentId ? ' in the selected folder' : search.mode === 'exact' ? ' everywhere' : ''
+  const title =
+    search.mode === 'exact'
+      ? `Files named "${search.name}"${scope}`
+      : `Files starting with "${search.name}"${scope}`
 
   return (
     <Stack gap="xs">
-      <Group justify="space-between">
-        <Text fw={600}>
-          Files named "{search.name}" {search.parentId ? 'in the selected folder' : 'everywhere'}
+      <Text fw={600}>{title}</Text>
+      {isPending && <Loader size="sm" />}
+      {error && <Alert color="red">{error.message}</Alert>}
+      {files?.length === 0 && (
+        <Text c="dimmed">
+          {search.mode === 'exact'
+            ? 'No file with exactly this name.'
+            : `No files start with "${search.name}".`}
         </Text>
-        <Button variant="subtle" size="xs" onClick={onClear}>
-          Clear search
-        </Button>
-      </Group>
-
-      {results.isPending && <Loader size="sm" />}
-      {results.error && <Alert color="red">{results.error.message}</Alert>}
-      {results.data?.length === 0 && <Text c="dimmed">No file with exactly this name.</Text>}
-      {results.data && results.data.length > 0 && (
-        <Table aria-label="Search results">
-          <Table.Thead>
-            <Table.Tr>
-              <Table.Th>Name</Table.Th>
-              <Table.Th>Location</Table.Th>
-            </Table.Tr>
-          </Table.Thead>
-          <Table.Tbody>
-            {results.data.map((file) => (
-              <Table.Tr key={file.id}>
-                <Table.Td>{file.name}</Table.Td>
-                <Table.Td>{file.parentId === null ? 'All items' : 'In a subfolder'}</Table.Td>
-              </Table.Tr>
-            ))}
-          </Table.Tbody>
-        </Table>
+      )}
+      {files && files.length > 0 && (
+        <FileSystemTree
+          data={data}
+          tree={tree}
+          ariaLabel="Search results"
+          onDelete={onDelete}
+          isDeleting={isDeleting}
+        />
       )}
     </Stack>
   )
