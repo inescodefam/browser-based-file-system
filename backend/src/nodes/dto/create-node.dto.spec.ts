@@ -97,20 +97,29 @@ describe('create node DTOs', () => {
 
   describe('CreateFileDto', () => {
     it.each(['report.pdf', 'a.tar.gz', 'IMG.JPG'])('accepts %j', async (name) => {
-      await expect(errorsFor(CreateFileDto, { name })).resolves.toEqual([]);
+      await expect(errorsFor(CreateFileDto, { name, parentId: VALID_UUID })).resolves.toEqual([]);
     });
 
     it.each(['report', 'report.', '.env', 'a.toolongextension', 'a.p df'])(
       'rejects %j because it has no valid extension',
       async (name) => {
-        await expect(errorsFor(CreateFileDto, { name })).resolves.toContain(EXTENSION_MESSAGE);
+        await expect(
+          errorsFor(CreateFileDto, { name, parentId: VALID_UUID }),
+        ).resolves.toContain(EXTENSION_MESSAGE);
       },
     );
 
     it('applies the shared name rules too', async () => {
-      await expect(errorsFor(CreateFileDto, { name: 'a/b.txt' })).resolves.toContain(
-        FORBIDDEN_CHARS_MESSAGE,
-      );
+      await expect(
+        errorsFor(CreateFileDto, { name: 'a/b.txt', parentId: VALID_UUID }),
+      ).resolves.toContain(FORBIDDEN_CHARS_MESSAGE);
+    });
+
+    it('requires a parent folder', async () => {
+      expect((await errorsFor(CreateFileDto, { name: 'a.txt' })).length).toBeGreaterThan(0);
+      expect(
+        (await errorsFor(CreateFileDto, { name: 'a.txt', parentId: null })).length,
+      ).toBeGreaterThan(0);
     });
   });
 });
