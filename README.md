@@ -10,18 +10,33 @@ A simple file system API and web UI for creating folders and files, searching th
 - React Query
 - PostgreSQL (ltree)
 - Swagger
+- TypeScript
 
-## Getting started
+## Getting started (Docker)
 
-_TODO_
+You need [Docker](https://docs.docker.com/get-docker/) with Compose.
+In the root folder:
+```bash
+docker compose up --build
+```
+
+Then open:
+
+- App: http://localhost:8080
+- API docs: http://localhost:3000/api/docs
+
+Stop with `Ctrl+C`. Remove containers and the database volume with `docker compose down -v`.
 
 ## Running tests
 
-_TODO_
+```bash
+cd backend && npm test && npm run test:api
+cd frontend && npm test
+```
 
 ## API documentation
 
-Swagger UI: http://localhost:3000/api/docs
+Swagger UI: http://localhost:3000/api/docs (also when running in Docker)
 
 ## Assumptions and trade-offs
 
