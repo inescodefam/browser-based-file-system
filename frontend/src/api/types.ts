@@ -1,6 +1,5 @@
 export type FileSystemItemType = 'file' | 'folder'
 
-
 export interface FileSystemItem {
   id: string
   name: string
