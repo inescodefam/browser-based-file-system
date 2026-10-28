@@ -18,7 +18,10 @@ describe('request', () => {
   it('sends a GET with the query string and returns the parsed JSON', async () => {
     const fetchMock = mockFetch(json([{ id: '1' }]))
 
-    const result = await request('/files/search', { query: { name: 'a b.txt', parentId: undefined } })
+    const result = await request('/files/search', {
+      method: 'GET',
+      query: { name: 'a b.txt', parentId: undefined },
+    })
 
     expect(result).toEqual([{ id: '1' }])
     const [url, init] = fetchMock.mock.calls[0]
@@ -64,7 +67,7 @@ describe('request', () => {
   it('falls back to a generic message when the body is not JSON', async () => {
     mockFetch(new Response('Bad gateway', { status: 502 }))
 
-    await expect(request('/nodes')).rejects.toMatchObject({
+    await expect(request('/nodes', { method: 'GET' })).rejects.toMatchObject({
       status: 502,
       message: 'Request failed (502)',
     })

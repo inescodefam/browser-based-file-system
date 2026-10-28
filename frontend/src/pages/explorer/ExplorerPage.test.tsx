@@ -3,47 +3,20 @@ import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { fileSystemItemsApi } from '../../api/fileSystemItems'
 import { ApiError } from '../../api/http'
-import type { FileSystemItem, FileSystemItemType } from '../../api/types'
+import { installMockBackend } from '../../test/mockBackend'
 import { renderWithProviders } from '../../test/renderWithProviders'
 import { ExplorerPage } from './ExplorerPage'
 
 vi.mock('../../api/fileSystemItems') 
 const api = vi.mocked(fileSystemItemsApi)
 
-let db: FileSystemItem[] 
-let nextId: number
-
-const makeItem = (
-  name: string,
-  type: FileSystemItemType,
-  parentId: string | null,
-): FileSystemItem => ({
-  id: `id-${nextId++}`,
-  name,
-  type,
-  parentId,
-  createdAt: '2026-10-28T10:00:00.000Z',
-})
+let backend: ReturnType<typeof installMockBackend>
 
 beforeEach(() => {
-  nextId = 1
-  const docs = makeItem('docs', 'folder', null)
-  db = [docs, makeItem('readme.md', 'file', null), makeItem('inside.txt', 'file', docs.id)]
-
-  api.list.mockImplementation(async (parentId) => db.filter((i) => i.parentId === (parentId ?? null)))
-  api.createFolder.mockImplementation(async (name, parentId) => {
-    const item = makeItem(name, 'folder', parentId ?? null)
-    db.push(item)
-    return item
-  })
-  api.createFile.mockImplementation(async (name, parentId) => {
-    const item = makeItem(name, 'file', parentId ?? null)
-    db.push(item)
-    return item
-  })
-  api.remove.mockImplementation(async (id) => {
-    db = db.filter((i) => i.id !== id && i.parentId !== id)
-  })
+  backend = installMockBackend(api)
+  const docs = backend.add('docs', 'folder')
+  backend.add('readme.md', 'file')
+  backend.add('inside.txt', 'file', docs.id)
 })
 
 describe('ExplorerPage', () => {
@@ -70,7 +43,7 @@ describe('ExplorerPage', () => {
   })
 
   it('shows a message for an empty folder', async () => {
-    db = []
+    backend.items = []
     renderWithProviders(<ExplorerPage />)
 
     expect(await screen.findByText('This folder is empty.')).toBeInTheDocument()
@@ -169,7 +142,7 @@ describe('ExplorerPage', () => {
     await user.click(screen.getByRole('button', { name: 'Delete readme.md' }))
 
     expect(window.confirm).toHaveBeenCalledWith('Delete file "readme.md"?')
-    expect(api.remove).toHaveBeenCalledWith('id-2') // readme.md
+    expect(api.remove).toHaveBeenCalledWith('id-2')
     await waitFor(() => expect(screen.queryByText('readme.md')).not.toBeInTheDocument())
   })
 
@@ -192,13 +165,12 @@ describe('ExplorerPage', () => {
     await user.click(await screen.findByRole('button', { name: 'docs' }))
     await screen.findByText('inside.txt')
 
-    // Someone else deletes the folder; our next load of it fails with 404
     api.list.mockImplementation(async (parentId) => {
       if (parentId) throw new ApiError(404, 'Folder "id-1" does not exist')
-      return db
+      return backend.items
     })
     await user.type(screen.getByLabelText('Name'), 'x')
-    await user.click(screen.getByRole('button', { name: 'Create' })) // triggers a refetch
+    await user.click(screen.getByRole('button', { name: 'Create' }))
 
     expect(await screen.findByText('Folder "id-1" does not exist')).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Back to all files' }))

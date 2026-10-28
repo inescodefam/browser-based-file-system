@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { fileSystemItemsApi } from '../../api/fileSystemItems'
 import { ApiError } from '../../api/http'
-import { installFakeBackend } from '../../test/fakeBackend'
+import { installMockBackend } from '../../test/mockBackend'
 import { renderWithProviders } from '../../test/renderWithProviders'
 import { ExplorerPage } from './ExplorerPage'
 
@@ -12,10 +12,10 @@ const api = vi.mocked(fileSystemItemsApi)
 
 const AFTER_DEBOUNCE = { timeout: 3000 }
 
-let backend: ReturnType<typeof installFakeBackend>
+let backend: ReturnType<typeof installMockBackend>
 
 beforeEach(() => {
-  backend = installFakeBackend(api)
+  backend = installMockBackend(api)
   const docs = backend.add('docs', 'folder')
   backend.add('report.pdf', 'file')
   backend.add('report.pdf', 'file', docs.id)

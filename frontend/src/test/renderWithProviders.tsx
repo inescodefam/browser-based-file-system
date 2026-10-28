@@ -8,7 +8,7 @@ export const renderWithProviders = (ui: ReactElement) => {
     defaultOptions: { queries: { retry: false } }, 
   })
   return render(
-    <MantineProvider>
+    <MantineProvider env="test">
       <QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>
     </MantineProvider>,
   )
