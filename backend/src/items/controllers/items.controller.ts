@@ -10,7 +10,7 @@ import {
 import { FileSystemItem } from '../domain/item';
 import { ListItemsQueryDto } from '../dto/list-items-query.dto';
 import { ItemResponseDto } from '../dto/item-response.dto';
-import { ItemsService } from '../items.service';
+import { ItemsService } from '../services/items.service';
 
 @ApiTags('items')
 @Controller('items')

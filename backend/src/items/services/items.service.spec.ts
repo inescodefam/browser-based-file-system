@@ -1,12 +1,12 @@
 import { ConfigService } from '@nestjs/config';
-import { ItemType } from './domain/item';
+import { ItemType } from '../domain/item';
 import {
   ItemAlreadyExistsError,
   ItemNotFoundError,
   ParentIsNotFolderError,
   ParentNotFoundError,
-} from './domain/item.errors';
-import { InMemoryItemRepository } from './infrastructure/in-memory-item.repository';
+} from '../domain/item.errors';
+import { InMemoryItemRepository } from '../infrastructure/in-memory-item.repository';
 import { ItemsService } from './items.service';
 
 const SEARCH_LIMIT = 3;

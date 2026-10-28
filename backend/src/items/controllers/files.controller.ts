@@ -13,7 +13,7 @@ import { CreateFileDto } from '../dto/create-file.dto';
 import { ItemResponseDto } from '../dto/item-response.dto';
 import { SearchFilesQueryDto } from '../dto/search-files-query.dto';
 import { SuggestFilesQueryDto } from '../dto/suggest-files-query.dto';
-import { ItemsService } from '../items.service';
+import { ItemsService } from '../services/items.service';
 
 @ApiTags('files')
 @Controller('files')

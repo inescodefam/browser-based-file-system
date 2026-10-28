@@ -6,7 +6,7 @@ import { FilesController } from './controllers/files.controller';
 import { FoldersController } from './controllers/folders.controller';
 import { ItemErrorsFilter } from './controllers/item-errors.filter';
 import { ItemsController } from './controllers/items.controller';
-import { ItemsService } from './items.service';
+import { ItemsService } from './services/items.service';
 
 @Module({
   imports: [PersistenceModule],

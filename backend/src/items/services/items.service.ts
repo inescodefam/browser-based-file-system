@@ -1,15 +1,15 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { EnvVars } from '../config/env.validation';
-import { compareByName, FileSystemItem, ItemType } from './domain/item';
+import { EnvVars } from '../../config/env.validation';
+import { compareByName, FileSystemItem, ItemType } from '../domain/item';
 import {
   ItemNotFoundError,
   ParentIsNotFolderError,
   ParentNotFoundError,
-} from './domain/item.errors';
-import { ITEM_REPOSITORY, type ItemRepository } from './domain/item.repository';
-import { CreateFileDto } from './dto/create-file.dto';
-import { CreateFolderDto } from './dto/create-folder.dto';
+} from '../domain/item.errors';
+import { ITEM_REPOSITORY, type ItemRepository } from '../domain/item.repository';
+import { CreateFileDto } from '../dto/create-file.dto';
+import { CreateFolderDto } from '../dto/create-folder.dto';
 
 @Injectable()
 export class ItemsService {
