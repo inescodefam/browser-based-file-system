@@ -1,6 +1,6 @@
 import { Modal } from '@mantine/core'
 import { CreateFileSystemItemForm } from './CreateFileSystemItemForm'
-import type { FolderRef } from '../FolderBreadcrumbs'
+import type { FolderRef } from '../../FolderBreadcrumbs'
 
 export const CreateFileSystemItemModal = ({
   opened,
@@ -8,14 +8,15 @@ export const CreateFileSystemItemModal = ({
   parent,
 }: {
   opened: boolean
-  onClose: () => void
-  parent: FolderRef | null
+  parent?: FolderRef
+
+  onClose: VoidFunction
 }) => (
   <Modal
     opened={opened}
     onClose={onClose}
     title={`Create in ${parent ? `"${parent.name}"` : 'All items'}`}
   >
-    <CreateFileSystemItemForm parentId={parent?.id ?? null} onCreated={onClose} />
+    <CreateFileSystemItemForm parentId={parent?.id} onCreated={onClose} />
   </Modal>
 )

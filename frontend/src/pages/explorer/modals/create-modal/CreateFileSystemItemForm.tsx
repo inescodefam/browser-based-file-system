@@ -1,32 +1,34 @@
 import { Alert, Button, Group, SegmentedControl, Stack, Text, TextInput } from '@mantine/core'
-import { Controller, useForm, useWatch } from 'react-hook-form'
-import type { FileSystemItemType } from '../../../api/types'
+import { Controller, useForm } from 'react-hook-form'
+import type { FileSystemItemType } from '../../../../api/types'
 import { useCreateFileSystemItemMutation } from './useCreateFileSystemItemMutation'
-import { validateItemName } from './validateItemName'
+import { validateItemName } from './utils'
 
 export const CreateFileSystemItemForm = ({
   parentId,
   onCreated,
 }: {
-  parentId: string | null
-  onCreated: () => void
+  parentId?: string
+
+  onCreated: VoidFunction
 }) => {
-  const canCreateFile = parentId !== null
-  const createItem = useCreateFileSystemItemMutation(parentId)
+  const canCreateFile = parentId !== undefined
+  const { mutate, reset, isPending, error } = useCreateFileSystemItemMutation(parentId)
   const {
     register,
     control,
     handleSubmit,
     trigger,
     formState: { errors, isSubmitted },
+    watch,
   } = useForm<{ name: string; type: FileSystemItemType }>({
     defaultValues: { name: '', type: 'folder' },
   })
-  const type = useWatch({ control, name: 'type' })
+  const type = watch('type')
 
   const onSubmit = handleSubmit((values) => {
     if (values.type === 'file' && !canCreateFile) return
-    createItem.mutate(values, { onSuccess: onCreated })
+    mutate(values, { onSuccess: onCreated })
   })
 
   return (
@@ -62,12 +64,12 @@ export const CreateFileSystemItemForm = ({
           error={errors.name?.message}
           {...register('name', {
             validate: (value, formValues) => validateItemName(value, formValues.type),
-            onChange: () => createItem.reset(),
+            onChange: () => reset(),
           })}
         />
-        {createItem.error && <Alert color="red">{createItem.error.message}</Alert>}
+        {error && <Alert color="red">{error.message}</Alert>}
         <Group justify="flex-end">
-          <Button type="submit" loading={createItem.isPending}>
+          <Button type="submit" loading={isPending}>
             Create
           </Button>
         </Group>

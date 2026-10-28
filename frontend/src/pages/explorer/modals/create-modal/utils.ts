@@ -1,5 +1,5 @@
-import { NAME_MAX_LENGTH } from '../../../config'
-import type { FileSystemItemType } from '../../../api/types'
+import { NAME_MAX_LENGTH } from '../../../../config'
+import type { FileSystemItemType } from '../../../../api/types'
 
 const NAME_PATTERN = /^(?!\.{1,2}$)[^/\\]+$/
 const FILE_NAME_PATTERN = /^.+\.[A-Za-z0-9]{1,10}$/
