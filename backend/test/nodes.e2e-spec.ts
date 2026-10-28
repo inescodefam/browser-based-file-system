@@ -30,6 +30,11 @@ describe('Nodes API (e2e)', () => {
     return res.body as { id: string };
   };
 
+  const createFile = async (name: string, parentId: string): Promise<{ id: string }> => {
+    const res = await http().post('/files').send({ name, parentId }).expect(201);
+    return res.body as { id: string };
+  };
+
   describe('POST /folders', () => {
     it('creates a top-level folder', async () => {
       const res = await http().post('/folders').send({ name: 'docs' }).expect(201);
@@ -77,30 +82,34 @@ describe('Nodes API (e2e)', () => {
       expect(res.body).toMatchObject({ name: 'report.pdf', type: 'file', parentId: folder.id });
     });
 
+    it('returns 400 without a parent folder', async () => {
+      await http().post('/files').send({ name: 'a.txt' }).expect(400);
+    });
+
     it('returns 400 when the file has no extension', async () => {
-      await http().post('/files').send({ name: 'report' }).expect(400);
+      const docs = await createFolder('docs');
+
+      await http().post('/files').send({ name: 'report', parentId: docs.id }).expect(400);
     });
 
     it('returns 400 when the parent is a file', async () => {
-      const file = await http().post('/files').send({ name: 'a.txt' }).expect(201);
+      const docs = await createFolder('docs');
+      const file = await createFile('a.txt', docs.id);
 
-      await http()
-        .post('/folders')
-        .send({ name: 'docs', parentId: (file.body as { id: string }).id })
-        .expect(400);
+      await http().post('/folders').send({ name: 'nested', parentId: file.id }).expect(400);
     });
   });
 
   describe('GET /nodes', () => {
     it('lists the top level and a folder separately', async () => {
       const docs = await createFolder('docs');
-      await http().post('/files').send({ name: 'inside.txt', parentId: docs.id }).expect(201);
-      await http().post('/files').send({ name: 'root.txt' }).expect(201);
+      await createFile('inside.txt', docs.id);
+      await createFolder('other');
 
       const topLevel = await http().get('/nodes').expect(200);
       const inside = await http().get('/nodes').query({ parentId: docs.id }).expect(200);
 
-      expect(topLevel.body.map((n: { name: string }) => n.name)).toEqual(['docs', 'root.txt']);
+      expect(topLevel.body.map((n: { name: string }) => n.name)).toEqual(['docs', 'other']);
       expect(inside.body.map((n: { name: string }) => n.name)).toEqual(['inside.txt']);
     });
 
@@ -113,11 +122,26 @@ describe('Nodes API (e2e)', () => {
     });
   });
 
+  describe('GET /nodes/:id/ancestors', () => {
+    it('returns the folders from the top level down to the folder', async () => {
+      const docs = await createFolder('docs');
+      const sub = await createFolder('sub', docs.id);
+
+      const res = await http().get(`/nodes/${sub.id}/ancestors`).expect(200);
+
+      expect(res.body.map((node: { name: string }) => node.name)).toEqual(['docs', 'sub']);
+    });
+
+    it('returns 404 for an unknown folder', async () => {
+      await http().get(`/nodes/${randomUUID()}/ancestors`).expect(404);
+    });
+  });
+
   describe('DELETE /nodes/:id', () => {
     it('returns 204 and deletes a folder with everything inside it', async () => {
       const docs = await createFolder('docs');
       const sub = await createFolder('sub', docs.id);
-      await http().post('/files').send({ name: 'deep.txt', parentId: sub.id }).expect(201);
+      await createFile('deep.txt', sub.id);
 
       await http().delete(`/nodes/${docs.id}`).expect(204);
 
@@ -138,8 +162,9 @@ describe('Nodes API (e2e)', () => {
   describe('GET /files/search', () => {
     it('finds files by exact name, optionally inside a folder', async () => {
       const docs = await createFolder('docs');
-      await http().post('/files').send({ name: 'report.pdf' }).expect(201);
-      await http().post('/files').send({ name: 'report.pdf', parentId: docs.id }).expect(201);
+      const other = await createFolder('other');
+      await createFile('report.pdf', other.id);
+      await createFile('report.pdf', docs.id);
 
       const everywhere = await http().get('/files/search').query({ name: 'report.pdf' }).expect(200);
       const inDocs = await http()
@@ -153,7 +178,8 @@ describe('Nodes API (e2e)', () => {
     });
 
     it('is case-sensitive', async () => {
-      await http().post('/files').send({ name: 'Report.pdf' }).expect(201);
+      const docs = await createFolder('docs');
+      await createFile('Report.pdf', docs.id);
 
       const res = await http().get('/files/search').query({ name: 'report.pdf' }).expect(200);
 
@@ -171,16 +197,32 @@ describe('Nodes API (e2e)', () => {
 
   describe('GET /files/suggestions', () => {
     it('returns files starting with the prefix, limited to SEARCH_LIMIT', async () => {
+      const docs = await createFolder('docs');
       const limit = Number(process.env.SEARCH_LIMIT ?? 10);
       for (let i = 0; i < limit + 2; i++) {
-        await http().post('/files').send({ name: `note-${String(i).padStart(3, '0')}.txt` }).expect(201);
+        await createFile(`note-${String(i).padStart(3, '0')}.txt`, docs.id);
       }
-      await http().post('/files').send({ name: 'other.txt' }).expect(201);
+      await createFile('other.txt', docs.id);
 
       const res = await http().get('/files/suggestions').query({ prefix: 'note-' }).expect(200);
 
       expect(res.body).toHaveLength(limit);
       expect(res.body[0].name).toBe('note-000.txt');
+    });
+
+    it('limits suggestions to a folder', async () => {
+      const docs = await createFolder('docs');
+      const other = await createFolder('other');
+      await createFile('report.pdf', other.id);
+      await createFile('report-in.txt', docs.id);
+
+      const res = await http()
+        .get('/files/suggestions')
+        .query({ prefix: 'report', parentId: docs.id })
+        .expect(200);
+
+      expect(res.body).toHaveLength(1);
+      expect(res.body[0].name).toBe('report-in.txt');
     });
 
     it('returns 400 without a prefix', async () => {

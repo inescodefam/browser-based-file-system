@@ -57,11 +57,30 @@ export class InMemoryNodeRepository implements NodeRepository {
     return [...candidates].filter((node) => node.type === NodeType.FILE && node.name === name);
   } 
 
-  async findFilesByPrefix(prefix: string, limit: number): Promise<FileSystemNode[]> {
-    return [...this.nodesById.values()]
+  async findFilesByPrefix(
+    prefix: string,
+    limit: number,
+    folderId: string | null,
+  ): Promise<FileSystemNode[]> {
+    let candidates: Iterable<FileSystemNode> = this.nodesById.values();
+    if (folderId !== null) {
+      const folder = this.nodesById.get(folderId);
+      candidates = folder ? this.collectSubtree(folder) : [];
+    }
+    return [...candidates]
       .filter((node) => node.type === NodeType.FILE && node.name.startsWith(prefix))
       .sort(compareByName)
       .slice(0, limit);
+  }
+
+  async findAncestors(id: string): Promise<FileSystemNode[]> {
+    const chain: FileSystemNode[] = [];
+    let current = this.nodesById.get(id) ?? null;
+    while (current) {
+      chain.unshift(current);
+      current = current.parentId === null ? null : (this.nodesById.get(current.parentId) ?? null);
+    }
+    return chain;
   }
 
   private collectSubtree(root: FileSystemNode): FileSystemNode[] {

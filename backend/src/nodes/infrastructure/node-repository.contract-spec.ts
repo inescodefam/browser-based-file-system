@@ -118,6 +118,26 @@ export function describeNodeRepositoryContract(
       await expect(repo.delete(randomUUID())).resolves.toBe(false);
     });
 
+    it('returns the folders from the top level down to a node, including itself', async () => {
+      const docs = await folder('docs');
+      const sub = await folder('sub', docs.id);
+      await file('deep.txt', sub.id);
+
+      const ancestors = await repo.findAncestors(sub.id);
+
+      expect(ancestors.map((node) => node.id)).toEqual([docs.id, sub.id]);
+    });
+
+    it('returns only the node when it is at the top level', async () => {
+      const docs = await folder('docs');
+
+      await expect(repo.findAncestors(docs.id)).resolves.toEqual([docs]);
+    });
+
+    it('returns nothing for an unknown id', async () => {
+      await expect(repo.findAncestors(randomUUID())).resolves.toEqual([]);
+    });
+
     describe('findFilesByExactName', () => {
       it('searches everywhere, at any depth', async () => {
         const docs = await folder('docs');
@@ -172,7 +192,7 @@ export function describeNodeRepositoryContract(
         await file('other.txt');
         await folder('report-folder');
 
-        const found = await repo.findFilesByPrefix('report', 10);
+        const found = await repo.findFilesByPrefix('report', 10, null);
 
         expect(found.map((n) => n.name)).toEqual(['report-a.txt', 'report-b.txt']);
       });
@@ -180,7 +200,7 @@ export function describeNodeRepositoryContract(
       it('is case-sensitive', async () => {
         await file('Report.txt');
 
-        await expect(repo.findFilesByPrefix('report', 10)).resolves.toEqual([]);
+        await expect(repo.findFilesByPrefix('report', 10, null)).resolves.toEqual([]);
       });
 
       it('returns at most `limit` results (the first ones by name)', async () => {
@@ -188,9 +208,21 @@ export function describeNodeRepositoryContract(
           await file(name);
         }
 
-        const found = await repo.findFilesByPrefix('f', 3);
+        const found = await repo.findFilesByPrefix('f', 3, null);
 
         expect(found.map((n) => n.name)).toEqual(['f1.txt', 'f2.txt', 'f3.txt']);
+      });
+
+      it('limits the search to a folder and all its subfolders', async () => {
+        const docs = await folder('docs');
+        const sub = await folder('sub', docs.id);
+        await file('report.pdf');
+        const inDocs = await file('report-a.txt', docs.id);
+        const deep = await file('report-b.txt', sub.id);
+
+        const found = await repo.findFilesByPrefix('report', 10, docs.id);
+
+        expect(found.map((n) => n.id).sort()).toEqual([inDocs.id, deep.id].sort());
       });
 
       // Each prefix would also match `lookalike` if %, _ or \ were treated as LIKE wildcards/escapes
@@ -202,7 +234,7 @@ export function describeNodeRepositoryContract(
         await file(matching);
         await file(lookalike);
 
-        const found = await repo.findFilesByPrefix(prefix, 10);
+        const found = await repo.findFilesByPrefix(prefix, 10, null);
 
         expect(found.map((n) => n.name)).toEqual([matching]);
       });

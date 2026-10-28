@@ -41,6 +41,15 @@ export function ParentId(
   );
 }
 
+export function RequiredParentId(
+  description = 'Id of the folder that will contain this file.',
+) {
+  return applyDecorators(
+    ApiProperty({ format: 'uuid', description }),
+    IsUUID(),
+  );
+}
+
 export function SearchTerm(description: string, example: string) {
   return applyDecorators(
     ApiProperty({ description, example }),

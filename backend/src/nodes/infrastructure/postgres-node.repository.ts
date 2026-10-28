@@ -104,14 +104,38 @@ export class PostgresNodeRepository implements NodeRepository, OnModuleInit, OnM
     return rows.map(toNode);
   }
 
-  async findFilesByPrefix(prefix: string, limit: number): Promise<FileSystemNode[]> {
+  async findFilesByPrefix(
+    prefix: string,
+    limit: number,
+    folderId: string | null,
+  ): Promise<FileSystemNode[]> {
+    const pattern = `${escapeLikePattern(prefix)}%`;
+    const { rows } =
+      folderId === null
+        ? await this.pool.query<NodeRow>(
+            `SELECT ${COLUMNS} FROM nodes
+             WHERE type = 'file' AND name LIKE $1
+             ORDER BY name USING ~<~
+             LIMIT $2`,
+            [pattern, limit],
+          )
+        : await this.pool.query<NodeRow>(
+            `SELECT ${COLUMNS} FROM nodes
+             WHERE type = 'file' AND name LIKE $1
+               AND path <@ (SELECT path FROM nodes WHERE id = $3)
+             ORDER BY name USING ~<~
+             LIMIT $2`,
+            [pattern, limit, folderId],
+          );
+    return rows.map(toNode);
+  }
 
+  async findAncestors(id: string): Promise<FileSystemNode[]> {
     const { rows } = await this.pool.query<NodeRow>(
       `SELECT ${COLUMNS} FROM nodes
-       WHERE type = 'file' AND name LIKE $1
-       ORDER BY name USING ~<~
-       LIMIT $2`,
-      [`${escapeLikePattern(prefix)}%`, limit],
+       WHERE path @> (SELECT path FROM nodes WHERE id = $1)
+       ORDER BY nlevel(path)`,
+      [id],
     );
     return rows.map(toNode);
   }
