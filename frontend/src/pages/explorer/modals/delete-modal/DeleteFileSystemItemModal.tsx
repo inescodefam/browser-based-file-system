@@ -1,0 +1,62 @@
+import { Alert, Button, Group, Modal, Stack, Text } from '@mantine/core'
+import type { FileSystemItem } from '../../../../api/types'
+import { useDeleteFileSystemItemMutation } from './useDeleteFileSystemItemMutation'
+import { useCallback } from 'react'
+
+export const DeleteFileSystemItemModal = ({
+  item,
+  onClose,
+  onDeleted,
+}: {
+  item?: FileSystemItem
+
+  onClose: VoidFunction
+  onDeleted: (item: FileSystemItem) => void
+}) => {
+  const { mutate, reset, isPending, error } = useDeleteFileSystemItemMutation()
+
+  const close = useCallback(() => {
+    reset()
+    onClose()
+  }, [reset, onClose])
+
+  const kind = item?.type === 'folder' ? 'folder' : 'file'
+
+  return (
+    <Modal
+      opened={item !== undefined}
+      onClose={close}
+      title={item ? `Delete ${kind} "${item.name}"` : 'Delete'}
+    >
+      {item && (
+        <Stack>
+          <Text>
+            {item.type === 'folder'
+              ? `This will also delete all items inside "${item.name}".`
+              : `This will permanently delete "${item.name}".`}
+          </Text>
+          {error && <Alert color="red">{error.message}</Alert>}
+          <Group justify="flex-end">
+            <Button variant="default" onClick={close}>
+              Cancel
+            </Button>
+            <Button
+              color="red"
+              loading={isPending}
+              onClick={() =>
+                mutate(item.id, {
+                  onSuccess: () => {
+                    onDeleted(item)
+                    close()
+                  },
+                })
+              }
+            >
+              Delete
+            </Button>
+          </Group>
+        </Stack>
+      )}
+    </Modal>
+  )
+}

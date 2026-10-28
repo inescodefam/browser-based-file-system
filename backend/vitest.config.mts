@@ -6,7 +6,7 @@ export default defineConfig(({ mode }) => ({
   test: {
     globals: true,
     root: './',
-    include: ['**/*.spec.ts'],
+    include: ['src/**/*.spec.ts'],
     env: loadEnv(mode, '..', 'TEST_'),
   },
 }));

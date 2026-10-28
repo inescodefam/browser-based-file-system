@@ -10,7 +10,7 @@ async function bootstrap(): Promise<void> {
   setupApp(app);
 
   const swaggerConfig = new DocumentBuilder()
-    .setTitle('Browser-based file system API')
+    .setTitle('File system explorer')
     .setDescription('Create, search and delete folders and files.')
     .setVersion('1.0')
     .build();
