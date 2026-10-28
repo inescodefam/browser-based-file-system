@@ -1,40 +1,46 @@
-import { Alert, Button, Group, SegmentedControl, TextInput } from '@mantine/core'
+import { Alert, Button, Group, SegmentedControl, Stack, TextInput } from '@mantine/core'
 import { Controller, useForm, useWatch } from 'react-hook-form'
 import type { FileSystemItemType } from '../../api/types'
 import { useCreateFileSystemItemMutation } from './useCreateFileSystemItemMutation'
+import { validateItemName } from './validateItemName'
 
 export const CreateFileSystemItemForm = ({
   parentId,
+  onCreated,
 }: {
   parentId: string | null
+  onCreated: () => void
 }) => {
   const createItem = useCreateFileSystemItemMutation(parentId)
   const {
     register,
     control,
     handleSubmit,
-    resetField,
-    formState: { isValid },
+    trigger,
+    formState: { errors, isSubmitted },
   } = useForm<{ name: string; type: FileSystemItemType }>({
     defaultValues: { name: '', type: 'folder' },
-    mode: 'onChange', 
   })
   const type = useWatch({ control, name: 'type' })
 
   const onSubmit = handleSubmit((values) =>
-    createItem.mutate(values, { onSuccess: () => resetField('name') }),
+    createItem.mutate(values, { onSuccess: onCreated }),
   )
 
   return (
     <form onSubmit={onSubmit}>
-      <Group align="flex-end">
+      <Stack>
         <Controller
           name="type"
           control={control}
           render={({ field }) => (
             <SegmentedControl
+              fullWidth
               value={field.value}
-              onChange={field.onChange}
+              onChange={(value) => {
+                field.onChange(value)
+                if (isSubmitted) void trigger('name')
+              }}
               data={[
                 { label: 'Folder', value: 'folder' },
                 { label: 'File', value: 'file' },
@@ -43,22 +49,22 @@ export const CreateFileSystemItemForm = ({
           )}
         />
         <TextInput
+          data-autofocus
           label="Name"
           placeholder={type === 'file' ? 'report.pdf' : 'reports'}
+          error={errors.name?.message}
           {...register('name', {
-            validate: (value) => value.trim() !== '', 
-            onChange: () => createItem.reset(), 
+            validate: (value, formValues) => validateItemName(value, formValues.type),
+            onChange: () => createItem.reset(),
           })}
         />
-        <Button type="submit" loading={createItem.isPending} disabled={!isValid}>
-          Create
-        </Button>
-      </Group>
-      {createItem.error && (
-        <Alert color="red" mt="sm">
-          {createItem.error.message}
-        </Alert>
-      )}
+        {createItem.error && <Alert color="red">{createItem.error.message}</Alert>}
+        <Group justify="flex-end">
+          <Button type="submit" loading={createItem.isPending}>
+            Create
+          </Button>
+        </Group>
+      </Stack>
     </form>
   )
 }

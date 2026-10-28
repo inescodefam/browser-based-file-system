@@ -1,7 +1,8 @@
-import { Alert, Button, Loader, Stack } from '@mantine/core'
+import { Alert, Button, Group, Loader, Stack } from '@mantine/core'
+import { useDisclosure } from '@mantine/hooks'
 import { useState } from 'react'
 import type { FileSystemItem } from '../../api/types'
-import { CreateFileSystemItemForm } from './CreateFileSystemItemForm'
+import { CreateFileSystemItemModal } from './CreateFileSystemItemModal'
 import { FileSystemItemList } from './FileSystemItemList'
 import { FolderBreadcrumbs, type FolderRef } from './FolderBreadcrumbs'
 import { SearchBox } from './SearchBox'
@@ -10,18 +11,18 @@ import { useChildrenQuery } from './useChildrenQuery'
 import { useDeleteFileSystemItemMutation } from './useDeleteFileSystemItemMutation'
 import type { FileSearch } from './useSearchQuery'
 
-const TOP_LEVEL_FORM_KEY = 'top-level'
-
 export const ExplorerPage = () => {
   const [path, setPath] = useState<FolderRef[]>([])
   const [search, setSearch] = useState<FileSearch | null>(null)
-  const currentFolderId = path.at(-1)?.id ?? null
+  const [createOpened, { open: openCreate, close: closeCreate }] = useDisclosure(false)
+  const currentFolder = path.at(-1) ?? null
+  const currentFolderId = currentFolder?.id ?? null
 
   const children = useChildrenQuery(currentFolderId)
   const deleteItem = useDeleteFileSystemItemMutation()
 
   const openFolder = (folder: FileSystemItem) => {
-    deleteItem.reset() 
+    deleteItem.reset()
     setPath([...path, { id: folder.id, name: folder.name }])
   }
 
@@ -42,11 +43,14 @@ export const ExplorerPage = () => {
 
   return (
     <Stack>
-      <SearchBox currentFolder={path.at(-1) ?? null} onSearch={setSearch} />
+      <SearchBox currentFolder={currentFolder} onSearch={setSearch} />
       {search && <SearchResults search={search} onClear={() => setSearch(null)} />}
 
-      <FolderBreadcrumbs path={path} onNavigate={navigateTo} />
-      <CreateFileSystemItemForm key={currentFolderId ?? TOP_LEVEL_FORM_KEY} parentId={currentFolderId} />
+      <Group justify="space-between">
+        <FolderBreadcrumbs path={path} onNavigate={navigateTo} />
+        <Button onClick={openCreate}>Create</Button>
+      </Group>
+      <CreateFileSystemItemModal opened={createOpened} onClose={closeCreate} parent={currentFolder} />
 
       {deleteItem.error && <Alert color="red">{deleteItem.error.message}</Alert>}
 
@@ -56,7 +60,7 @@ export const ExplorerPage = () => {
           {children.error.message}
           {path.length > 0 && (
             <Button variant="light" size="xs" ml="sm" onClick={() => navigateTo(0)}>
-              Back to all files
+              Back to all items
             </Button>
           )}
         </Alert>

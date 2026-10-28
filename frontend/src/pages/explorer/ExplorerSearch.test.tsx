@@ -141,9 +141,11 @@ describe('search box', () => {
     expect(within(resultsTable).getAllByRole('row')).toHaveLength(2)
 
     backend.add('notes.txt', 'file', 'id-1')
-    await user.click(screen.getByRole('radio', { name: 'File' }))
-    await user.type(screen.getByLabelText('Name'), 'new.txt')
     await user.click(screen.getByRole('button', { name: 'Create' }))
+    const modal = within(await screen.findByRole('dialog'))
+    await user.click(modal.getByRole('radio', { name: 'File' }))
+    await user.type(modal.getByLabelText('Name'), 'new.txt')
+    await user.click(modal.getByRole('button', { name: 'Create' }))
 
     await waitFor(() => expect(api.searchByName).toHaveBeenCalledTimes(2))
   })
