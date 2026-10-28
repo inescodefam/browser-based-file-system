@@ -1,10 +1,10 @@
 import { useMutation } from '@tanstack/react-query'
 import { fileSystemItemsApi } from '../../api/fileSystemItems'
 import type { FileSystemItemType } from '../../api/types'
-import { useInvalidateFileSystemItems } from './useInvalidateFileSystemItems'
+import { useInvalidateFileSystemItemsCallback } from './useInvalidateFileSystemItemsCallback'
 
-export const useCreateFileSystemItem = (parentId: string | null) => {
-  const invalidateItems = useInvalidateFileSystemItems()
+export const useCreateFileSystemItemMutation = (parentId: string | null) => {
+  const invalidateItems = useInvalidateFileSystemItemsCallback()
   return useMutation({
     mutationFn: ({ name, type }: { name: string; type: FileSystemItemType }) =>
       type === 'folder'

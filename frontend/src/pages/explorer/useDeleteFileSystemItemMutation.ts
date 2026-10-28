@@ -1,9 +1,9 @@
 import { useMutation } from '@tanstack/react-query'
 import { fileSystemItemsApi } from '../../api/fileSystemItems'
-import { useInvalidateFileSystemItems } from './useInvalidateFileSystemItems'
+import { useInvalidateFileSystemItemsCallback } from './useInvalidateFileSystemItemsCallback'
 
-export const useDeleteFileSystemItem = () => {
-  const invalidateItems = useInvalidateFileSystemItems()
+export const useDeleteFileSystemItemMutation = () => {
+  const invalidateItems = useInvalidateFileSystemItemsCallback()
   return useMutation({
     mutationFn: (id: string) => fileSystemItemsApi.remove(id),
     onSuccess: invalidateItems,

@@ -1,14 +1,14 @@
 import { Alert, Button, Group, SegmentedControl, TextInput } from '@mantine/core'
 import { Controller, useForm, useWatch } from 'react-hook-form'
 import type { FileSystemItemType } from '../../api/types'
-import { useCreateFileSystemItem } from './useCreateFileSystemItem'
+import { useCreateFileSystemItemMutation } from './useCreateFileSystemItemMutation'
 
 export const CreateFileSystemItemForm = ({
   parentId,
 }: {
   parentId: string | null
 }) => {
-  const createItem = useCreateFileSystemItem(parentId)
+  const createItem = useCreateFileSystemItemMutation(parentId)
   const {
     register,
     control,

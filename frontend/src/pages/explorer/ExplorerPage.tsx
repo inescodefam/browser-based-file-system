@@ -4,17 +4,21 @@ import type { FileSystemItem } from '../../api/types'
 import { CreateFileSystemItemForm } from './CreateFileSystemItemForm'
 import { FileSystemItemList } from './FileSystemItemList'
 import { FolderBreadcrumbs, type FolderRef } from './FolderBreadcrumbs'
-import { useChildren } from './useChildren'
-import { useDeleteFileSystemItem } from './useDeleteFileSystemItem'
+import { SearchBox } from './SearchBox'
+import { SearchResults } from './SearchResults'
+import { useChildrenQuery } from './useChildrenQuery'
+import { useDeleteFileSystemItemMutation } from './useDeleteFileSystemItemMutation'
+import type { FileSearch } from './useSearchQuery'
 
 const TOP_LEVEL_FORM_KEY = 'top-level'
 
 export const ExplorerPage = () => {
   const [path, setPath] = useState<FolderRef[]>([])
+  const [search, setSearch] = useState<FileSearch | null>(null)
   const currentFolderId = path.at(-1)?.id ?? null
 
-  const children = useChildren(currentFolderId)
-  const deleteItem = useDeleteFileSystemItem()
+  const children = useChildrenQuery(currentFolderId)
+  const deleteItem = useDeleteFileSystemItemMutation()
 
   const openFolder = (folder: FileSystemItem) => {
     deleteItem.reset() 
@@ -38,6 +42,9 @@ export const ExplorerPage = () => {
 
   return (
     <Stack>
+      <SearchBox currentFolder={path.at(-1) ?? null} onSearch={setSearch} />
+      {search && <SearchResults search={search} onClear={() => setSearch(null)} />}
+
       <FolderBreadcrumbs path={path} onNavigate={navigateTo} />
       <CreateFileSystemItemForm key={currentFolderId ?? TOP_LEVEL_FORM_KEY} parentId={currentFolderId} />
 
