@@ -11,7 +11,7 @@ export const FolderBreadcrumbs = ({
   onNavigate: (depth: number) => void
 }) => {
   const crumbs = [
-    { label: 'All files', depth: 0 },
+    { label: 'All items', depth: 0 },
     ...path.map((folder, index) => ({ label: folder.name, depth: index + 1 })),
   ]
   const currentDepth = path.length

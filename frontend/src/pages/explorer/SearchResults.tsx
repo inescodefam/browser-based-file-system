@@ -36,7 +36,7 @@ export const SearchResults = ({
             {results.data.map((file) => (
               <Table.Tr key={file.id}>
                 <Table.Td>{file.name}</Table.Td>
-                <Table.Td>{file.parentId === null ? 'All files' : 'In a subfolder'}</Table.Td>
+                <Table.Td>{file.parentId === null ? 'All items' : 'In a subfolder'}</Table.Td>
               </Table.Tr>
             ))}
           </Table.Tbody>
