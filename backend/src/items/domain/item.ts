@@ -1,12 +1,12 @@
-export enum NodeType {
+export enum ItemType {
   FILE = 'file',
   FOLDER = 'folder',
 }
 
-export interface FileSystemNode {
+export interface FileSystemItem {
   id: string;
   name: string;
-  type: NodeType;
+  type: ItemType;
   parentId: string | null;
   createdAt: Date;
 }

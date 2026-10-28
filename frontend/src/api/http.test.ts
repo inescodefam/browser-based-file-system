@@ -43,7 +43,7 @@ describe('request', () => {
   it('returns undefined for 204 No Content', async () => {
     mockFetch(new Response(null, { status: 204 }))
 
-    await expect(request('/nodes/1', { method: 'DELETE' })).resolves.toBeUndefined()
+    await expect(request('/items/1', { method: 'DELETE' })).resolves.toBeUndefined()
   })
 
   it('throws an ApiError with the status and a joined validation message', async () => {
@@ -56,18 +56,18 @@ describe('request', () => {
   })
 
   it('uses the backend message for a conflict', async () => {
-    mockFetch(json({ message: 'A node named "docs" already exists in this folder' }, 409))
+    mockFetch(json({ message: 'An item named "docs" already exists in this folder' }, 409))
 
     await expect(request('/folders', { method: 'POST', body: {} })).rejects.toMatchObject({
       status: 409,
-      message: 'A node named "docs" already exists in this folder',
+      message: 'An item named "docs" already exists in this folder',
     })
   })
 
   it('falls back to a generic message when the body is not JSON', async () => {
     mockFetch(new Response('Bad gateway', { status: 502 }))
 
-    await expect(request('/nodes', { method: 'GET' })).rejects.toMatchObject({
+    await expect(request('/items', { method: 'GET' })).rejects.toMatchObject({
       status: 502,
       message: 'Request failed (502)',
     })

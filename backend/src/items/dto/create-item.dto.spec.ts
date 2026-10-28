@@ -22,7 +22,7 @@ async function errorsFor<T extends object>(
   return errors.flatMap((error) => Object.values(error.constraints ?? {}));
 }
 
-describe('create node DTOs', () => {
+describe('create item DTOs', () => {
   beforeAll(async () => {
     const moduleRef = await Test.createTestingModule({
       imports: [

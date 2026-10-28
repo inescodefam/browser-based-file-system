@@ -1,4 +1,4 @@
-import { FileName, RequiredParentId } from './decorators/node-fields.decorators';
+import { FileName, RequiredParentId } from './decorators/item-fields.decorators';
 
 export class CreateFileDto {
   @FileName()

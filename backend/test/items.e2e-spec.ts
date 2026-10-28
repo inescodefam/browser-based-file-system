@@ -5,7 +5,7 @@ import request from 'supertest';
 import { AppModule } from '../src/app.module';
 import { setupApp } from '../src/app.setup';
 
-describe('Nodes API (e2e)', () => {
+describe('Items API (e2e)', () => {
   let app: INestApplication;
 
   beforeAll(() => {
@@ -100,62 +100,62 @@ describe('Nodes API (e2e)', () => {
     });
   });
 
-  describe('GET /nodes', () => {
+  describe('GET /items', () => {
     it('lists the top level and a folder separately', async () => {
       const docs = await createFolder('docs');
       await createFile('inside.txt', docs.id);
       await createFolder('other');
 
-      const topLevel = await http().get('/nodes').expect(200);
-      const inside = await http().get('/nodes').query({ parentId: docs.id }).expect(200);
+      const topLevel = await http().get('/items').expect(200);
+      const inside = await http().get('/items').query({ parentId: docs.id }).expect(200);
 
       expect(topLevel.body.map((n: { name: string }) => n.name)).toEqual(['docs', 'other']);
       expect(inside.body.map((n: { name: string }) => n.name)).toEqual(['inside.txt']);
     });
 
     it('returns 400 for a parentId that is not a UUID', async () => {
-      await http().get('/nodes').query({ parentId: 'abc' }).expect(400);
+      await http().get('/items').query({ parentId: 'abc' }).expect(400);
     });
 
     it('returns 404 for an unknown folder', async () => {
-      await http().get('/nodes').query({ parentId: randomUUID() }).expect(404);
+      await http().get('/items').query({ parentId: randomUUID() }).expect(404);
     });
   });
 
-  describe('GET /nodes/:id/ancestors', () => {
+  describe('GET /items/:id/ancestors', () => {
     it('returns the folders from the top level down to the folder', async () => {
       const docs = await createFolder('docs');
       const sub = await createFolder('sub', docs.id);
 
-      const res = await http().get(`/nodes/${sub.id}/ancestors`).expect(200);
+      const res = await http().get(`/items/${sub.id}/ancestors`).expect(200);
 
-      expect(res.body.map((node: { name: string }) => node.name)).toEqual(['docs', 'sub']);
+      expect(res.body.map((item: { name: string }) => item.name)).toEqual(['docs', 'sub']);
     });
 
     it('returns 404 for an unknown folder', async () => {
-      await http().get(`/nodes/${randomUUID()}/ancestors`).expect(404);
+      await http().get(`/items/${randomUUID()}/ancestors`).expect(404);
     });
   });
 
-  describe('DELETE /nodes/:id', () => {
+  describe('DELETE /items/:id', () => {
     it('returns 204 and deletes a folder with everything inside it', async () => {
       const docs = await createFolder('docs');
       const sub = await createFolder('sub', docs.id);
       await createFile('deep.txt', sub.id);
 
-      await http().delete(`/nodes/${docs.id}`).expect(204);
+      await http().delete(`/items/${docs.id}`).expect(204);
 
-      const topLevel = await http().get('/nodes').expect(200);
+      const topLevel = await http().get('/items').expect(200);
       expect(topLevel.body).toEqual([]);
-      await http().get('/nodes').query({ parentId: sub.id }).expect(404);
+      await http().get('/items').query({ parentId: sub.id }).expect(404);
     });
 
     it('returns 404 for an unknown id', async () => {
-      await http().delete(`/nodes/${randomUUID()}`).expect(404);
+      await http().delete(`/items/${randomUUID()}`).expect(404);
     });
 
     it('returns 400 for an id that is not a UUID', async () => {
-      await http().delete('/nodes/abc').expect(400);
+      await http().delete('/items/abc').expect(400);
     });
   });
 

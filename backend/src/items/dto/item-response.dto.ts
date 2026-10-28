@@ -1,15 +1,15 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { FileSystemNode, NodeType } from '../domain/node';
+import { FileSystemItem, ItemType } from '../domain/item';
 
-export class NodeResponseDto implements FileSystemNode {
+export class ItemResponseDto implements FileSystemItem {
   @ApiProperty({ format: 'uuid' })
   id!: string;
 
   @ApiProperty({ example: 'report.pdf' })
   name!: string;
 
-  @ApiProperty({ enum: NodeType })
-  type!: NodeType;
+  @ApiProperty({ enum: ItemType })
+  type!: ItemType;
 
   @ApiProperty({ format: 'uuid', nullable: true, description: 'null = top level' })
   parentId!: string | null;

@@ -2,28 +2,28 @@ import { Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Pool } from 'pg';
 import { EnvVars } from '../config/env.validation';
-import { NODE_REPOSITORY, type NodeRepository } from '../nodes/domain/node.repository';
-import { InMemoryNodeRepository } from '../nodes/infrastructure/in-memory-node.repository';
-import { PostgresNodeRepository } from '../nodes/infrastructure/postgres-node.repository';
+import { ITEM_REPOSITORY, type ItemRepository } from '../items/domain/item.repository';
+import { InMemoryItemRepository } from '../items/infrastructure/in-memory-item.repository';
+import { PostgresItemRepository } from '../items/infrastructure/postgres-item.repository';
 
 @Module({
   providers: [
     {
-      provide: NODE_REPOSITORY,
+      provide: ITEM_REPOSITORY,
       inject: [ConfigService],
-      useFactory: (config: ConfigService<EnvVars, true>): NodeRepository => {
+      useFactory: (config: ConfigService<EnvVars, true>): ItemRepository => {
         const driver = config.get('DB_DRIVER', { infer: true });
         switch (driver) {
           case 'memory':
-            return new InMemoryNodeRepository();
+            return new InMemoryItemRepository();
           case 'postgres': {
             const connectionString = config.get('DATABASE_URL', { infer: true });
-            return new PostgresNodeRepository(new Pool({ connectionString }));
+            return new PostgresItemRepository(new Pool({ connectionString }));
           }
         }
       },
     },
   ],
-  exports: [NODE_REPOSITORY],
+  exports: [ITEM_REPOSITORY],
 })
 export class PersistenceModule {}

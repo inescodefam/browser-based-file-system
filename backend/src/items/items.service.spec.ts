@@ -1,22 +1,22 @@
 import { ConfigService } from '@nestjs/config';
-import { NodeType } from './domain/node';
+import { ItemType } from './domain/item';
 import {
-  NodeAlreadyExistsError,
-  NodeNotFoundError,
+  ItemAlreadyExistsError,
+  ItemNotFoundError,
   ParentIsNotFolderError,
   ParentNotFoundError,
-} from './domain/node.errors';
-import { InMemoryNodeRepository } from './infrastructure/in-memory-node.repository';
-import { NodesService } from './nodes.service';
+} from './domain/item.errors';
+import { InMemoryItemRepository } from './infrastructure/in-memory-item.repository';
+import { ItemsService } from './items.service';
 
 const SEARCH_LIMIT = 3;
 
-describe('NodesService', () => {
-  let service: NodesService;
+describe('ItemsService', () => {
+  let service: ItemsService;
 
   beforeEach(() => {
-    service = new NodesService(
-      new InMemoryNodeRepository(),
+    service = new ItemsService(
+      new InMemoryItemRepository(),
       new ConfigService({ SEARCH_LIMIT }),
     );
   });
@@ -25,7 +25,7 @@ describe('NodesService', () => {
     it('creates a top-level folder', async () => {
       const folder = await service.createFolder({ name: 'docs' });
 
-      expect(folder).toMatchObject({ name: 'docs', type: NodeType.FOLDER, parentId: null });
+      expect(folder).toMatchObject({ name: 'docs', type: ItemType.FOLDER, parentId: null });
     });
 
     it('creates a file inside a folder', async () => {
@@ -33,22 +33,22 @@ describe('NodesService', () => {
 
       const file = await service.createFile({ name: 'a.txt', parentId: folder.id });
 
-      expect(file).toMatchObject({ name: 'a.txt', type: NodeType.FILE, parentId: folder.id });
+      expect(file).toMatchObject({ name: 'a.txt', type: ItemType.FILE, parentId: folder.id });
     });
 
-    it('treats parentId null like a top-level node for folders', async () => {
+    it('treats parentId null like a top-level folder', async () => {
       const folder = await service.createFolder({ name: 'docs', parentId: null });
 
       expect(folder.parentId).toBeNull();
     });
 
-    it('throws NodeAlreadyExistsError for a duplicate name in the same folder', async () => {
+    it('throws ItemAlreadyExistsError for a duplicate name in the same folder', async () => {
       const docs = await service.createFolder({ name: 'docs' });
       await service.createFolder({ name: 'sub', parentId: docs.id });
 
       await expect(
         service.createFile({ name: 'sub', parentId: docs.id }),
-      ).rejects.toBeInstanceOf(NodeAlreadyExistsError);
+      ).rejects.toBeInstanceOf(ItemAlreadyExistsError);
     });
 
     it('lets only one of two concurrent identical requests succeed', async () => {
@@ -60,7 +60,7 @@ describe('NodesService', () => {
       const rejected = results.filter((r) => r.status === 'rejected');
       expect(results.filter((r) => r.status === 'fulfilled')).toHaveLength(1);
       expect(rejected).toHaveLength(1);
-      expect(rejected[0].reason).toBeInstanceOf(NodeAlreadyExistsError);
+      expect(rejected[0].reason).toBeInstanceOf(ItemAlreadyExistsError);
     });
 
     it('throws ParentNotFoundError when the parent does not exist', async () => {
@@ -127,11 +127,11 @@ describe('NodesService', () => {
 
       const ancestors = await service.getAncestors(sub.id);
 
-      expect(ancestors.map((node) => node.id)).toEqual([docs.id, sub.id]);
+      expect(ancestors.map((item) => item.id)).toEqual([docs.id, sub.id]);
     });
 
-    it('throws NodeNotFoundError for an unknown id', async () => {
-      await expect(service.getAncestors('missing-id')).rejects.toBeInstanceOf(NodeNotFoundError);
+    it('throws ItemNotFoundError for an unknown id', async () => {
+      await expect(service.getAncestors('missing-id')).rejects.toBeInstanceOf(ItemNotFoundError);
     });
 
     it('throws ParentIsNotFolderError when the id belongs to a file', async () => {
@@ -154,8 +154,8 @@ describe('NodesService', () => {
       await expect(service.listChildren(docs.id)).rejects.toBeInstanceOf(ParentNotFoundError);
     });
 
-    it('throws NodeNotFoundError for an unknown id', async () => {
-      await expect(service.delete('missing-id')).rejects.toBeInstanceOf(NodeNotFoundError);
+    it('throws ItemNotFoundError for an unknown id', async () => {
+      await expect(service.delete('missing-id')).rejects.toBeInstanceOf(ItemNotFoundError);
     });
   });
 

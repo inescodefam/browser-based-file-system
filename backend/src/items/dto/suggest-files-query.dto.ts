@@ -1,4 +1,4 @@
-import { ParentId, SearchTerm } from './decorators/node-fields.decorators';
+import { ParentId, SearchTerm } from './decorators/item-fields.decorators';
 
 export class SuggestFilesQueryDto {
   @SearchTerm('Beginning of the file name (case-sensitive).', 'rep')

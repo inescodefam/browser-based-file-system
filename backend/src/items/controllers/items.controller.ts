@@ -7,26 +7,26 @@ import {
   ApiOperation,
   ApiTags,
 } from '@nestjs/swagger';
-import { FileSystemNode } from '../domain/node';
-import { ListNodesQueryDto } from '../dto/list-nodes-query.dto';
-import { NodeResponseDto } from '../dto/node-response.dto';
-import { NodesService } from '../nodes.service';
+import { FileSystemItem } from '../domain/item';
+import { ListItemsQueryDto } from '../dto/list-items-query.dto';
+import { ItemResponseDto } from '../dto/item-response.dto';
+import { ItemsService } from '../items.service';
 
-@ApiTags('nodes')
-@Controller('nodes')
-export class NodesController {
-  constructor(private readonly nodesService: NodesService) {}
+@ApiTags('items')
+@Controller('items')
+export class ItemsController {
+  constructor(private readonly itemsService: ItemsService) {}
 
   @Get()
   @ApiOperation({
     summary: 'List the direct children of a folder',
     description: 'Folders come first, then files, both sorted by name. Omit parentId for the top level.',
   })
-  @ApiOkResponse({ type: [NodeResponseDto] })
+  @ApiOkResponse({ type: [ItemResponseDto] })
   @ApiBadRequestResponse({ description: 'Invalid parentId, or parentId is a file' })
   @ApiNotFoundResponse({ description: 'Folder does not exist' })
-  listChildren(@Query() query: ListNodesQueryDto): Promise<FileSystemNode[]> {
-    return this.nodesService.listChildren(query.parentId ?? null);
+  listChildren(@Query() query: ListItemsQueryDto): Promise<FileSystemItem[]> {
+    return this.itemsService.listChildren(query.parentId ?? null);
   }
 
   @Get(':id/ancestors')
@@ -34,11 +34,11 @@ export class NodesController {
     summary: 'List the folders from the top level down to this folder',
     description: 'Includes the folder itself. Used for breadcrumbs.',
   })
-  @ApiOkResponse({ type: [NodeResponseDto] })
+  @ApiOkResponse({ type: [ItemResponseDto] })
   @ApiBadRequestResponse({ description: 'id is not a valid UUID, or the id belongs to a file' })
   @ApiNotFoundResponse({ description: 'Folder does not exist' })
-  getAncestors(@Param('id', ParseUUIDPipe) id: string): Promise<FileSystemNode[]> {
-    return this.nodesService.getAncestors(id);
+  getAncestors(@Param('id', ParseUUIDPipe) id: string): Promise<FileSystemItem[]> {
+    return this.itemsService.getAncestors(id);
   }
 
   @Delete(':id')
@@ -49,8 +49,8 @@ export class NodesController {
   })
   @ApiNoContentResponse({ description: 'Deleted' })
   @ApiBadRequestResponse({ description: 'id is not a valid UUID' })
-  @ApiNotFoundResponse({ description: 'Node does not exist' })
+  @ApiNotFoundResponse({ description: 'Item does not exist' })
   delete(@Param('id', ParseUUIDPipe) id: string): Promise<void> {
-    return this.nodesService.delete(id);
+    return this.itemsService.delete(id);
   }
 }

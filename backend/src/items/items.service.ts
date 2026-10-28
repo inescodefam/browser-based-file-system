@@ -1,47 +1,47 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { EnvVars } from '../config/env.validation';
-import { compareByName, FileSystemNode, NodeType } from './domain/node';
+import { compareByName, FileSystemItem, ItemType } from './domain/item';
 import {
-  NodeNotFoundError,
+  ItemNotFoundError,
   ParentIsNotFolderError,
   ParentNotFoundError,
-} from './domain/node.errors';
-import { NODE_REPOSITORY, type NodeRepository } from './domain/node.repository';
+} from './domain/item.errors';
+import { ITEM_REPOSITORY, type ItemRepository } from './domain/item.repository';
 import { CreateFileDto } from './dto/create-file.dto';
 import { CreateFolderDto } from './dto/create-folder.dto';
 
 @Injectable()
-export class NodesService {
+export class ItemsService {
   constructor(
-    @Inject(NODE_REPOSITORY) private readonly repository: NodeRepository,
+    @Inject(ITEM_REPOSITORY) private readonly repository: ItemRepository,
     @Inject(ConfigService) private readonly config: ConfigService<EnvVars, true>,
   ) {}
 
-  createFolder(dto: CreateFolderDto): Promise<FileSystemNode> {
-    return this.create(dto, NodeType.FOLDER);
+  createFolder(dto: CreateFolderDto): Promise<FileSystemItem> {
+    return this.create(dto, ItemType.FOLDER);
   }
 
-  createFile(dto: CreateFileDto): Promise<FileSystemNode> {
-    return this.create(dto, NodeType.FILE);
+  createFile(dto: CreateFileDto): Promise<FileSystemItem> {
+    return this.create(dto, ItemType.FILE);
   }
 
-  async listChildren(parentId: string | null): Promise<FileSystemNode[]> {
+  async listChildren(parentId: string | null): Promise<FileSystemItem[]> {
     await this.assertParentIsFolder(parentId);
     const children = await this.repository.findChildren(parentId);
     return children.sort(
       (a, b) =>
-        Number(b.type === NodeType.FOLDER) - Number(a.type === NodeType.FOLDER) ||
+        Number(b.type === ItemType.FOLDER) - Number(a.type === ItemType.FOLDER) ||
         compareByName(a, b),
     );
   }
 
-  async findFilesByName(name: string, folderId: string | null): Promise<FileSystemNode[]> {
+  async findFilesByName(name: string, folderId: string | null): Promise<FileSystemItem[]> {
     await this.assertParentIsFolder(folderId);
     return this.repository.findFilesByExactName(name, folderId);
   }
 
-  async suggestFiles(prefix: string, folderId: string | null = null): Promise<FileSystemNode[]> {
+  async suggestFiles(prefix: string, folderId: string | null = null): Promise<FileSystemItem[]> {
     await this.assertParentIsFolder(folderId);
     return this.repository.findFilesByPrefix(
       prefix,
@@ -50,13 +50,13 @@ export class NodesService {
     );
   }
 
-  async getAncestors(id: string): Promise<FileSystemNode[]> {
-    const node = await this.repository.findById(id);
-    if (!node) {
-      throw new NodeNotFoundError(id);
+  async getAncestors(id: string): Promise<FileSystemItem[]> {
+    const item = await this.repository.findById(id);
+    if (!item) {
+      throw new ItemNotFoundError(id);
     }
-    if (node.type !== NodeType.FOLDER) {
-      throw new ParentIsNotFolderError(node.id, node.name);
+    if (item.type !== ItemType.FOLDER) {
+      throw new ParentIsNotFolderError(item.id, item.name);
     }
     return this.repository.findAncestors(id);
   }
@@ -64,14 +64,14 @@ export class NodesService {
   async delete(id: string): Promise<void> {
     const wasDeleted = await this.repository.delete(id);
     if (!wasDeleted) {
-      throw new NodeNotFoundError(id);
+      throw new ItemNotFoundError(id);
     }
   }
 
   private async create(
     dto: CreateFolderDto | CreateFileDto,
-    type: NodeType,
-  ): Promise<FileSystemNode> {
+    type: ItemType,
+  ): Promise<FileSystemItem> {
     const parentId = dto.parentId ?? null;
     await this.assertParentIsFolder(parentId);
 
@@ -85,7 +85,7 @@ export class NodesService {
     if (!parent) {
       throw new ParentNotFoundError(parentId);
     }
-    if (parent.type !== NodeType.FOLDER) {
+    if (parent.type !== ItemType.FOLDER) {
       throw new ParentIsNotFolderError(parent.id, parent.name);
     }
   }

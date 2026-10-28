@@ -1,28 +1,28 @@
 import { randomUUID } from 'node:crypto';
-import { NodeType } from '../domain/node';
-import { NodeAlreadyExistsError, ParentNotFoundError } from '../domain/node.errors';
-import { NodeRepository } from '../domain/node.repository';
+import { ItemType } from '../domain/item';
+import { ItemAlreadyExistsError, ParentNotFoundError } from '../domain/item.errors';
+import { ItemRepository } from '../domain/item.repository';
 
 export interface RepositoryUnderTest {
-  repo: NodeRepository;
+  repo: ItemRepository;
   /** Release resources (e.g. close the database pool) */
   cleanup?: () => Promise<void>;
 }
 
-export function describeNodeRepositoryContract(
+export function describeItemRepositoryContract(
   implementationName: string,
   setup: () => Promise<RepositoryUnderTest>,
   options: { skip?: boolean } = {},
 ): void {
-  describe.skipIf(options.skip)(`${implementationName} (NodeRepository contract)`, () => {
-    let repo: NodeRepository;
+  describe.skipIf(options.skip)(`${implementationName} (ItemRepository contract)`, () => {
+    let repo: ItemRepository;
     let cleanup: (() => Promise<void>) | undefined;
 
     const folder = (name: string, parentId: string | null = null) =>
-      repo.create({ name, type: NodeType.FOLDER, parentId });
+      repo.create({ name, type: ItemType.FOLDER, parentId });
     const file = (name: string, parentId: string | null = null) =>
-      repo.create({ name, type: NodeType.FILE, parentId });
-    const namesOf = (nodes: { name: string }[]) => nodes.map((n) => n.name).sort();
+      repo.create({ name, type: ItemType.FILE, parentId });
+    const namesOf = (items: { name: string }[]) => items.map((n) => n.name).sort();
 
     beforeEach(async () => {
       ({ repo, cleanup } = await setup());
@@ -32,10 +32,10 @@ export function describeNodeRepositoryContract(
       await cleanup?.();
     });
 
-    it('creates a node and finds it by id', async () => {
+    it('creates an item and finds it by id', async () => {
       const created = await folder('docs');
 
-      expect(created).toMatchObject({ name: 'docs', type: NodeType.FOLDER, parentId: null });
+      expect(created).toMatchObject({ name: 'docs', type: ItemType.FOLDER, parentId: null });
       await expect(repo.findById(created.id)).resolves.toEqual(created);
     });
 
@@ -57,14 +57,14 @@ export function describeNodeRepositoryContract(
     it('rejects a duplicate name in the same folder', async () => {
       await folder('docs');
 
-      await expect(file('docs')).rejects.toBeInstanceOf(NodeAlreadyExistsError);
+      await expect(file('docs')).rejects.toBeInstanceOf(ItemAlreadyExistsError);
     });
 
     it('rejects a duplicate name inside a subfolder too', async () => {
       const docs = await folder('docs');
       await file('a.txt', docs.id);
 
-      await expect(file('a.txt', docs.id)).rejects.toBeInstanceOf(NodeAlreadyExistsError);
+      await expect(file('a.txt', docs.id)).rejects.toBeInstanceOf(ItemAlreadyExistsError);
     });
 
     it('allows the same name in different folders', async () => {
@@ -91,7 +91,7 @@ export function describeNodeRepositoryContract(
       const rejected = results.filter((r) => r.status === 'rejected');
       expect(results.filter((r) => r.status === 'fulfilled')).toHaveLength(1);
       expect(rejected).toHaveLength(1);
-      expect(rejected[0].reason).toBeInstanceOf(NodeAlreadyExistsError);
+      expect(rejected[0].reason).toBeInstanceOf(ItemAlreadyExistsError);
     });
 
     it('deletes a folder together with its whole subtree', async () => {
@@ -118,17 +118,17 @@ export function describeNodeRepositoryContract(
       await expect(repo.delete(randomUUID())).resolves.toBe(false);
     });
 
-    it('returns the folders from the top level down to a node, including itself', async () => {
+    it('returns the folders from the top level down to a folder, including itself', async () => {
       const docs = await folder('docs');
       const sub = await folder('sub', docs.id);
       await file('deep.txt', sub.id);
 
       const ancestors = await repo.findAncestors(sub.id);
 
-      expect(ancestors.map((node) => node.id)).toEqual([docs.id, sub.id]);
+      expect(ancestors.map((item) => item.id)).toEqual([docs.id, sub.id]);
     });
 
-    it('returns only the node when it is at the top level', async () => {
+    it('returns only the folder when it is at the top level', async () => {
       const docs = await folder('docs');
 
       await expect(repo.findAncestors(docs.id)).resolves.toEqual([docs]);

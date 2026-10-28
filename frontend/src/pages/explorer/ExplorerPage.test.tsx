@@ -218,7 +218,7 @@ describe('ExplorerPage create modal', () => {
 
   it('stays open and shows the backend error, e.g. a duplicate name', async () => {
     api.createFolder.mockRejectedValue(
-      new ApiError(409, 'A node named "docs" already exists in this folder'),
+      new ApiError(409, 'An item named "docs" already exists in this folder'),
     )
     const user = userEvent.setup()
     renderWithProviders(<ExplorerPage />)
@@ -227,25 +227,25 @@ describe('ExplorerPage create modal', () => {
     await createThroughModal(user, 'docs')
 
     expect(
-      await screen.findByText('A node named "docs" already exists in this folder'),
+      await screen.findByText('An item named "docs" already exists in this folder'),
     ).toBeInTheDocument()
     expect(screen.getByRole('dialog')).toBeInTheDocument()
   })
 
   it('starts empty again when reopened', async () => {
-    api.createFolder.mockRejectedValue(new ApiError(409, 'A node named "x" already exists'))
+    api.createFolder.mockRejectedValue(new ApiError(409, 'An item named "x" already exists'))
     const user = userEvent.setup()
     renderWithProviders(<ExplorerPage />)
     await tree.findByText('readme.md')
     await createThroughModal(user, 'x')
-    await screen.findByText('A node named "x" already exists')
+    await screen.findByText('An item named "x" already exists')
 
     await user.keyboard('{Escape}')
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
     const modal = await openCreateModal(user)
 
     expect(modal.getByLabelText('Name')).toHaveValue('')
-    expect(screen.queryByText('A node named "x" already exists')).not.toBeInTheDocument()
+    expect(screen.queryByText('An item named "x" already exists')).not.toBeInTheDocument()
   })
 })
 

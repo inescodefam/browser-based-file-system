@@ -33,11 +33,11 @@ export const installMockBackend = (api: Mocked<typeof fileSystemItemsApi>) => {
     backend.items.filter((item) => item.parentId === (parentId ?? null)),
   )
   api.ancestors.mockImplementation(async (folderId) => {
-    const node = backend.items.find((item) => item.id === folderId)
-    if (!node) throw new ApiError(404, `Folder "${folderId}" does not exist`)
-    if (node.type !== 'folder') throw new ApiError(400, `"${node.name}" is not a folder`)
+    const folder = backend.items.find((item) => item.id === folderId)
+    if (!folder) throw new ApiError(404, `Folder "${folderId}" does not exist`)
+    if (folder.type !== 'folder') throw new ApiError(400, `"${folder.name}" is not a folder`)
     const chain: FileSystemItem[] = []
-    let current: FileSystemItem | undefined = node
+    let current: FileSystemItem | undefined = folder
     while (current) {
       chain.unshift(current)
       const parentId: string | null = current.parentId

@@ -1,10 +1,10 @@
-export class NodeAlreadyExistsError extends Error {
+export class ItemAlreadyExistsError extends Error {
   constructor(
-    public readonly nodeName: string,
+    public readonly itemName: string,
     public readonly parentId: string | null,
   ) {
-    super(`A node named "${nodeName}" already exists in this folder`);
-    this.name = 'NodeAlreadyExistsError';
+    super(`An item named "${itemName}" already exists in this folder`);
+    this.name = 'ItemAlreadyExistsError';
   }
 }
 
@@ -28,9 +28,9 @@ export class ParentIsNotFolderError extends Error {
   }
 }
 
-export class NodeNotFoundError extends Error {
-  constructor(public readonly nodeId: string) {
-    super(`Node "${nodeId}" does not exist`);
-    this.name = 'NodeNotFoundError';
+export class ItemNotFoundError extends Error {
+  constructor(public readonly itemId: string) {
+    super(`Item "${itemId}" does not exist`);
+    this.name = 'ItemNotFoundError';
   }
 }

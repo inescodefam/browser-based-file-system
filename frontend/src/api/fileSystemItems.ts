@@ -3,10 +3,10 @@ import type { FileSystemItem } from './types'
 
 export const fileSystemItemsApi = {
   list: (parentId?: string | null, signal?: AbortSignal) =>
-    request<FileSystemItem[]>('/nodes', { method: 'GET', query: { parentId: parentId ?? undefined }, signal }),
+    request<FileSystemItem[]>('/items', { method: 'GET', query: { parentId: parentId ?? undefined }, signal }),
 
   ancestors: (folderId: string, signal?: AbortSignal) =>
-    request<FileSystemItem[]>(`/nodes/${folderId}/ancestors`, { method: 'GET', signal }),
+    request<FileSystemItem[]>(`/items/${folderId}/ancestors`, { method: 'GET', signal }),
 
   createFolder: (name: string, parentId?: string | null) =>
     request<FileSystemItem>('/folders', { method: 'POST', body: { name, parentId } }),
@@ -14,7 +14,7 @@ export const fileSystemItemsApi = {
   createFile: (name: string, parentId: string) =>
     request<FileSystemItem>('/files', { method: 'POST', body: { name, parentId } }),
 
-  remove: (id: string) => request<void>(`/nodes/${id}`, { method: 'DELETE' }),
+  remove: (id: string) => request<void>(`/items/${id}`, { method: 'DELETE' }),
 
   searchByName: (name: string, parentId?: string | null, signal?: AbortSignal) =>
     request<FileSystemItem[]>('/files/search', {

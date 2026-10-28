@@ -7,23 +7,23 @@ import {
   ApiOperation,
   ApiTags,
 } from '@nestjs/swagger';
-import { FileSystemNode } from '../domain/node';
+import { FileSystemItem } from '../domain/item';
 import { CreateFolderDto } from '../dto/create-folder.dto';
-import { NodeResponseDto } from '../dto/node-response.dto';
-import { NodesService } from '../nodes.service';
+import { ItemResponseDto } from '../dto/item-response.dto';
+import { ItemsService } from '../items.service';
 
 @ApiTags('folders')
 @Controller('folders')
 export class FoldersController {
-  constructor(private readonly nodesService: NodesService) {}
+  constructor(private readonly itemsService: ItemsService) {}
 
   @Post()
   @ApiOperation({ summary: 'Create a folder (top level, or inside another folder)' })
-  @ApiCreatedResponse({ type: NodeResponseDto })
+  @ApiCreatedResponse({ type: ItemResponseDto })
   @ApiBadRequestResponse({ description: 'Invalid name or parentId, or parent is a file' })
   @ApiNotFoundResponse({ description: 'Parent folder does not exist' })
-  @ApiConflictResponse({ description: 'A node with this name already exists in the folder' })
-  create(@Body() dto: CreateFolderDto): Promise<FileSystemNode> {
-    return this.nodesService.createFolder(dto);
+  @ApiConflictResponse({ description: 'An item with this name already exists in the folder' })
+  create(@Body() dto: CreateFolderDto): Promise<FileSystemItem> {
+    return this.itemsService.createFolder(dto);
   }
 }

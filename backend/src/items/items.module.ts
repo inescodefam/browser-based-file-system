@@ -4,17 +4,17 @@ import { PersistenceModule } from '../persistence/persistence.module';
 import { NameMaxLengthConstraint } from './dto/decorators/name-max-length.constraint';
 import { FilesController } from './controllers/files.controller';
 import { FoldersController } from './controllers/folders.controller';
-import { NodeErrorsFilter } from './controllers/node-errors.filter';
-import { NodesController } from './controllers/nodes.controller';
-import { NodesService } from './nodes.service';
+import { ItemErrorsFilter } from './controllers/item-errors.filter';
+import { ItemsController } from './controllers/items.controller';
+import { ItemsService } from './items.service';
 
 @Module({
   imports: [PersistenceModule],
-  controllers: [NodesController, FoldersController, FilesController],
+  controllers: [ItemsController, FoldersController, FilesController],
   providers: [
-    NodesService,
+    ItemsService,
     NameMaxLengthConstraint,
-    { provide: APP_FILTER, useClass: NodeErrorsFilter },
+    { provide: APP_FILTER, useClass: ItemErrorsFilter },
   ],
 })
-export class NodesModule {}
+export class ItemsModule {}

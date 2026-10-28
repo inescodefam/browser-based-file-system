@@ -4,10 +4,10 @@ import { Transform } from 'class-transformer';
 import { IsNotEmpty, IsOptional, IsString, IsUUID, Matches } from 'class-validator';
 import { NameMaxLength } from './name-max-length.constraint';
 
-const NODE_NAME_PATTERN = /^(?!\.{1,2}$)[^/\\]+$/;
+const ITEM_NAME_PATTERN = /^(?!\.{1,2}$)[^/\\]+$/;
 const FILE_NAME_PATTERN = /^.+\.[A-Za-z0-9]{1,10}$/;
 
-export function NodeName() {
+export function ItemName() {
   return applyDecorators(
     ApiProperty({ example: 'reports', description: 'Case sensitive, unique within its folder.' }),
     Transform(({ value }: { value: unknown }) =>
@@ -15,7 +15,7 @@ export function NodeName() {
     ),
     IsString(),
     IsNotEmpty(),
-    Matches(NODE_NAME_PATTERN, {
+    Matches(ITEM_NAME_PATTERN, {
       message: 'Name must not contain "/" or "\\" and must not be "." or ".."',
     }),
     NameMaxLength(),
@@ -24,7 +24,7 @@ export function NodeName() {
 
 export function FileName() {
   return applyDecorators(
-    NodeName(),
+    ItemName(),
     Matches(FILE_NAME_PATTERN, {
       message: 'File name must have an extension, e.g. "report.pdf"',
     }),

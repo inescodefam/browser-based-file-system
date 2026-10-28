@@ -1,4 +1,4 @@
-import { ParentId, SearchTerm } from './decorators/node-fields.decorators';
+import { ParentId, SearchTerm } from './decorators/item-fields.decorators';
 
 export class SearchFilesQueryDto {
   @SearchTerm('Exact file name (case-sensitive).', 'report.pdf')
