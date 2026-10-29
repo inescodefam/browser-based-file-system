@@ -1,5 +1,5 @@
 import { Alert, Button, Group, SegmentedControl, Stack, Text, TextInput } from '@mantine/core'
-import { Controller, useForm } from 'react-hook-form'
+import { Controller, useForm, useWatch } from 'react-hook-form'
 import type { FileSystemItemType } from '../../../../api/types'
 import { useCreateFileSystemItemMutation } from './useCreateFileSystemItemMutation'
 import { validateItemName } from './utils'
@@ -20,11 +20,10 @@ export const CreateFileSystemItemForm = ({
     handleSubmit,
     trigger,
     formState: { errors, isSubmitted },
-    watch,
   } = useForm<{ name: string; type: FileSystemItemType }>({
     defaultValues: { name: '', type: 'folder' },
   })
-  const type = watch('type')
+  const type = useWatch({ control, name: 'type' })
 
   const onSubmit = handleSubmit((values) => {
     if (values.type === 'file' && !canCreateFile) return

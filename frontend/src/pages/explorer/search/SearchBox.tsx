@@ -1,7 +1,7 @@
 import { Autocomplete, Checkbox, CloseButton, Group, Loader, Stack } from '@mantine/core'
 import { useDebouncedValue } from '@mantine/hooks'
-import { useEffect, useMemo, useRef } from 'react'
-import { Controller, useForm } from 'react-hook-form'
+import { useEffect, useMemo, useState } from 'react'
+import { Controller, useForm, useWatch } from 'react-hook-form'
 import type { FolderRef } from '../FolderBreadcrumbs'
 import { SEARCH_DEBOUNCE_MS } from './fileSearch'
 import { useSuggestionsQuery } from './useSuggestionsQuery'
@@ -28,17 +28,24 @@ export const SearchBox = ({
   onPrefix: (term: string, parentId?: string) => void
   onExact: (name: string, parentId?: string) => void
 }) => {
-  const { control, register, handleSubmit, getValues, watch } = useForm<{
+  const { control, register, handleSubmit, getValues } = useForm<{
     term: string
     onlyInFolder: boolean
   }>({ defaultValues: { term: initialTerm, onlyInFolder: initialOnlyInFolder } })
 
-  const term = asInputValue(watch('term'))
+  const term = asInputValue(useWatch({ control, name: 'term' }))
   const [debouncedTerm] = useDebouncedValue(term, SEARCH_DEBOUNCE_MS)
-  const onlyInFolder = watch('onlyInFolder')
+  const onlyInFolder = useWatch({ control, name: 'onlyInFolder' })
   const parentId = onlyInFolder && currentFolder ? currentFolder.id : undefined
   const suggestions = useSuggestionsQuery(debouncedTerm, parentId)
-  const exactName = useRef<string | undefined>(undefined)
+  const [pickedName, setPickedName] = useState<string>()
+  const trimmedTerm = term.trim()
+  const pickStillApplies =
+    pickedName !== undefined &&
+    trimmedTerm !== '' &&
+    (pickedName === trimmedTerm || pickedName.startsWith(trimmedTerm))
+  if (pickedName !== undefined && !pickStillApplies) setPickedName(undefined)
+  const exactName = pickStillApplies ? pickedName : undefined
 
   const suggestedNames = useMemo(
     () => [...new Set(suggestions.data?.map((file) => file.name))],
@@ -48,33 +55,27 @@ export const SearchBox = ({
   const exact = (name: unknown) => {
     const trimmedName = asInputValue(name).trim()
     if (trimmedName === '') return
-    exactName.current = trimmedName
+    setPickedName(trimmedName)
     const scoped = getValues('onlyInFolder')
     onExact(trimmedName, scoped && currentFolder ? currentFolder.id : undefined)
   }
 
   useEffect(() => {
-    const trimmedTerm = term.trim()
     if (trimmedTerm === '') {
-      exactName.current = undefined
       onPrefix('')
       return
     }
 
-    if (exactName.current !== undefined && exactName.current !== trimmedTerm) {
-      if (exactName.current.startsWith(trimmedTerm)) return
-      exactName.current = undefined
-    }
-
+    if (exactName !== undefined && exactName !== trimmedTerm) return
     if (debouncedTerm.trim() !== trimmedTerm) return
 
-    if (exactName.current === trimmedTerm) {
+    if (exactName === trimmedTerm) {
       onExact(trimmedTerm, parentId)
       return
     }
 
     onPrefix(trimmedTerm, parentId)
-  }, [term, debouncedTerm, parentId, onPrefix, onExact])
+  }, [trimmedTerm, debouncedTerm, parentId, exactName, onPrefix, onExact])
 
   return (
     <form onSubmit={handleSubmit(({ term: submitted }) => exact(submitted))}>
