@@ -4,6 +4,7 @@ import { Pool } from 'pg';
 import { EnvVars } from '../config/env.validation';
 import { ITEM_REPOSITORY, type ItemRepository } from '../items/domain/item.repository';
 import { InMemoryItemRepository } from '../items/infrastructure/in-memory-item.repository';
+import { postgresConnectionString } from '../items/infrastructure/postgres-connection';
 import { PostgresItemRepository } from '../items/infrastructure/postgres-item.repository';
 
 @Module({
@@ -17,7 +18,9 @@ import { PostgresItemRepository } from '../items/infrastructure/postgres-item.re
           case 'memory':
             return new InMemoryItemRepository();
           case 'postgres': {
-            const connectionString = config.get('DATABASE_URL', { infer: true });
+            const connectionString = postgresConnectionString(
+              config.get('DATABASE_URL', { infer: true }),
+            );
             return new PostgresItemRepository(new Pool({ connectionString }));
           }
         }

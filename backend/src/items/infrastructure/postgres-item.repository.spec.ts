@@ -1,6 +1,7 @@
 import { Pool } from 'pg';
 import { ItemType } from '../domain/item';
 import { describeItemRepositoryContract } from './item-repository.contract-spec';
+import { postgresConnectionString } from './postgres-connection';
 import { PostgresItemRepository } from './postgres-item.repository';
 
 // WARNING: Use a throwaway database
@@ -10,7 +11,7 @@ const databaseUrl = process.env.TEST_DATABASE_URL;
 describeItemRepositoryContract(
   'PostgresItemRepository',
   async () => {
-    const pool = new Pool({ connectionString: databaseUrl });
+    const pool = new Pool({ connectionString: postgresConnectionString(databaseUrl!) });
     const repo = new PostgresItemRepository(pool);
     await repo.onModuleInit(); 
     await pool.query('TRUNCATE items CASCADE'); 
@@ -21,7 +22,7 @@ describeItemRepositoryContract(
 
 describe.skipIf(!databaseUrl)('PostgresItemRepository (ltree paths)', () => {
   it('stores the path as parent path + own id', async () => {
-    const pool = new Pool({ connectionString: databaseUrl });
+    const pool = new Pool({ connectionString: postgresConnectionString(databaseUrl!) });
     const repo = new PostgresItemRepository(pool);
     await repo.onModuleInit();
     await pool.query('TRUNCATE items CASCADE');
