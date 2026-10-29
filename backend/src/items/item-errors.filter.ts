@@ -12,7 +12,7 @@ import {
   ItemNotFoundError,
   ParentIsNotFolderError,
   ParentNotFoundError,
-} from '../domain/item.errors';
+} from './domain/item.errors';
 
 type ItemDomainError =
   | ItemAlreadyExistsError
