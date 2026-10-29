@@ -20,7 +20,7 @@ services:
       DB_DRIVER: postgres
       DATABASE_URL: postgres://postgres:postgres@postgres:5432/filesystem
       SEARCH_LIMIT: 10
-      NAME_MAX_LENGTH: 255
+      NAME_MAX_LENGTH: 50
     ports:
       - '3000:3000'
     depends_on:
@@ -44,7 +44,7 @@ services:
       context: ./frontend
       args:
         VITE_API_URL: http://localhost:3000
-        NAME_MAX_LENGTH: '255'
+        NAME_MAX_LENGTH: '50'
     ports:
       - '8080:80'
     depends_on:

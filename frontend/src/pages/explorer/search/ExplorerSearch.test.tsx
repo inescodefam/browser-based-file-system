@@ -186,13 +186,13 @@ describe('search box', () => {
   })
 
   it('shows the backend error when the search fails', async () => {
-    api.searchByName.mockRejectedValue(new ApiError(400, 'Name must be at most 255 characters long.'))
+    api.searchByName.mockRejectedValue(new ApiError(400, 'Name must be at most 50 characters long.'))
     const user = userEvent.setup()
     renderWithProviders(<ExplorerPage />)
 
     await user.type(searchInput(), 'x{Enter}')
 
-    expect(await screen.findByText('Name must be at most 255 characters long.')).toBeInTheDocument()
+    expect(await screen.findByText('Name must be at most 50 characters long.')).toBeInTheDocument()
   })
 
   it('restores the folder tree when the box is cleared', async () => {
