@@ -2,9 +2,15 @@
 
 A simple file system API and web UI for creating folders and files, searching them, and deleting them.
 
-Backend and frontend live in one Git repo so you can clone once, but they are two apps and can be deployed separately. You need Node.js 24.
+Backend and frontend live in one Git repo so you can clone once, but they are two apps and can be deployed separately.
 
 ## Instructions to run locally
+
+Install **Node.js 24.15 or newer** (or [use Docker](#docker)) before anything else, then check it:
+
+```bash
+node -v // must show 24 or newer version
+```
 
 Copy [`.env.example`](.env.example) to `.env` in the repo root first. Both apps read that file for things like `SEARCH_LIMIT`, `NAME_MAX_LENGTH`, `VITE_API_URL`, and database settings.
 
@@ -14,7 +20,7 @@ cp .env.example .env
 
 By default `.env` sets `DB_DRIVER=memory`, so the API keeps data in memory and you do not need Postgres. That is the easiest way to try the app on your machine.
 
-Start the API and the UI in two terminals:
+The install command is `npm ci` (`npm` first). Start the API and the UI in two terminals:
 
 ```bash
 cd backend
@@ -33,17 +39,19 @@ Then open:
 - App: http://localhost:5173
 - API docs: http://localhost:3000/api/docs
 
-There is no extra “debug mode” for the frontend. `npm run dev` already runs Vite with hot reload; you can use the browser’s developer tools if you want to inspect it. On the backend, `npm run start:dev` is enough to run the API while you work. `npm run start:debug` only adds the Node inspector (port 9229, `chrome://inspect`) if you actually want to attach a debugger.
-
 ### Docker
 
-Docker is a full stack: Postgres, the API, and the UI. You do **not** switch `.env` from memory to Postgres for this. Compose ignores that local file and sets `DB_DRIVER=postgres` itself, with a Postgres 16 container and a named volume so data survives restarts.
+To skip installing Node, use Docker.
 
-You need [Docker](https://docs.docker.com/get-docker/) with Compose. From the repo root:
+Compose runs the full stack: Postgres, the API, and the UI. You do **not** need to switch `.env` from memory to Postgres. Compose ignores that local file and sets `DB_DRIVER=postgres` itself, with a Postgres 16 container and a named volume so data survives restarts.
+
+You need [Docker Desktop](https://docs.docker.com/get-docker/) with Compose, and the app has to be **running** before this command. From the repo root:
 
 ```bash
 docker compose up --build
 ```
+
+On Windows, `open //./pipe/dockerDesktopLinuxEngine: The system cannot find the file specified` means the `docker` command is installed but Docker Desktop is stopped. Open Docker Desktop, wait until it says it is running, then run the same command again. Node is not required for this path.
 
 Then open:
 
