@@ -97,3 +97,7 @@ The HTTP API already handles concurrent requests. What is missing if several peo
 I also thought about a clickable path on each search hit (jump to the parent folder), rename/edit, and Playwright tests against the running app. I left those out because they felt out of scope for this task.
 
 I would still like to deploy it: the React app on a static host (Vercel or similar), and the Nest API plus Postgres on something that runs a long-lived Node process (Railway, Render, or Fly). The API as it is written is not a good fit for Vercel serverless.
+
+## License
+
+This project is licensed under the [MIT License](LICENSE).
