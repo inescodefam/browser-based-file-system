@@ -65,7 +65,7 @@ export const installMockBackend = (api: Mocked<typeof fileSystemItemsApi>) => {
       .filter(
         (item) =>
           item.type === 'file' &&
-          item.name.startsWith(prefix) &&
+          item.name.toLowerCase().startsWith(prefix.toLowerCase()) &&
           (!parentId || isInside(item, parentId)),
       )
       .sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0))

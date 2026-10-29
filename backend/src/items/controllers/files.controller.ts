@@ -51,7 +51,7 @@ export class FilesController {
   @ApiOperation({
     summary: 'Autocomplete: files whose name starts with a prefix',
     description:
-      'Case-sensitive, ordered by name, at most SEARCH_LIMIT results (configured in .env). When parentId is given, only files inside that folder and its subfolders are suggested.',
+      'Case-insensitive prefix, ordered by name, at most SEARCH_LIMIT results (configured in .env). When parentId is given, only files inside that folder and its subfolders are suggested.',
   })
   @ApiOkResponse({ type: [ItemResponseDto] })
   @ApiBadRequestResponse({ description: 'Missing or too long prefix, invalid parentId, or parentId is a file' })

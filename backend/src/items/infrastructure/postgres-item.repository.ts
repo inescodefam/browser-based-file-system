@@ -114,14 +114,14 @@ export class PostgresItemRepository implements ItemRepository, OnModuleInit, OnM
       folderId === null
         ? await this.pool.query<ItemRow>(
             `SELECT ${COLUMNS} FROM items
-             WHERE type = 'file' AND name LIKE $1
+             WHERE type = 'file' AND LOWER(name) LIKE LOWER($1)
              ORDER BY name USING ~<~
              LIMIT $2`,
             [pattern, limit],
           )
         : await this.pool.query<ItemRow>(
             `SELECT ${COLUMNS} FROM items
-             WHERE type = 'file' AND name LIKE $1
+             WHERE type = 'file' AND LOWER(name) LIKE LOWER($1)
                AND path <@ (SELECT path FROM items WHERE id = $3)
              ORDER BY name USING ~<~
              LIMIT $2`,

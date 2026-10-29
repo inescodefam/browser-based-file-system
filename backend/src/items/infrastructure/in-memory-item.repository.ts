@@ -16,12 +16,13 @@ export class InMemoryItemRepository implements ItemRepository {
       throw new ParentNotFoundError(parentId);
     }
     const siblings = this.childrenByParent.get(parentId) ?? new Map<string, FileSystemItem>();
-    if (siblings.has(name)) {
+    const nameKey = name.toLowerCase();
+    if (siblings.has(nameKey)) {
       throw new ItemAlreadyExistsError(name, parentId);
     }
 
     const item: FileSystemItem = { id: randomUUID(), name, type, parentId, createdAt: new Date() };
-    siblings.set(name, item);
+    siblings.set(nameKey, item);
     this.childrenByParent.set(parentId, siblings);
     this.itemsById.set(item.id, item);
     return item;
@@ -44,7 +45,7 @@ export class InMemoryItemRepository implements ItemRepository {
       this.itemsById.delete(item.id);
       this.childrenByParent.delete(item.id);
     }
-    this.childrenByParent.get(root.parentId)?.delete(root.name);
+    this.childrenByParent.get(root.parentId)?.delete(root.name.toLowerCase());
     return true;
   }
 
@@ -68,7 +69,11 @@ export class InMemoryItemRepository implements ItemRepository {
       candidates = folder ? this.collectSubtree(folder) : [];
     }
     return [...candidates]
-      .filter((item) => item.type === ItemType.FILE && item.name.startsWith(prefix))
+      .filter(
+        (item) =>
+          item.type === ItemType.FILE &&
+          item.name.toLowerCase().startsWith(prefix.toLowerCase()),
+      )
       .sort(compareByName)
       .slice(0, limit);
   }

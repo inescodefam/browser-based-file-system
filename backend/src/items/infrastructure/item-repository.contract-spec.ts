@@ -75,10 +75,10 @@ export function describeItemRepositoryContract(
       await expect(file('x.txt', b.id)).resolves.toBeDefined();
     });
 
-    it('treats names as case-sensitive', async () => {
+    it('rejects a name that only differs by case in the same folder', async () => {
       await folder('Docs');
 
-      await expect(folder('docs')).resolves.toBeDefined();
+      await expect(folder('docs')).rejects.toBeInstanceOf(ItemAlreadyExistsError);
     });
 
     it('rejects a missing parent', async () => {
@@ -197,10 +197,10 @@ export function describeItemRepositoryContract(
         expect(found.map((n) => n.name)).toEqual(['report-a.txt', 'report-b.txt']);
       });
 
-      it('is case-sensitive', async () => {
-        await file('Report.txt');
+      it('is case-insensitive', async () => {
+        const created = await file('Report.txt');
 
-        await expect(repo.findFilesByPrefix('report', 10, null)).resolves.toEqual([]);
+        await expect(repo.findFilesByPrefix('report', 10, null)).resolves.toEqual([created]);
       });
 
       it('returns at most `limit` results (the first ones by name)', async () => {

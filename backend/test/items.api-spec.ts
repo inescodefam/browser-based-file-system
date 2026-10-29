@@ -49,10 +49,10 @@ describe('Items API', () => {
       await http().post('/folders').send({ name: 'docs' }).expect(409);
     });
 
-    it('treats names as case-sensitive', async () => {
+    it('rejects a name that only differs by case', async () => {
       await createFolder('Docs');
 
-      await http().post('/folders').send({ name: 'docs' }).expect(201);
+      await http().post('/folders').send({ name: 'docs' }).expect(409);
     });
 
     it('returns 400 for an invalid name', async () => {
@@ -210,6 +210,16 @@ describe('Items API', () => {
 
       expect(res.body).toHaveLength(limit);
       expect(res.body[0].name).toBe('note-000.txt');
+    });
+
+    it('matches a prefix ignoring case', async () => {
+      const docs = await createFolder('docs');
+      await createFile('Report.txt', docs.id);
+
+      const res = await http().get('/files/suggestions').query({ prefix: 'rep' }).expect(200);
+
+      expect(res.body).toHaveLength(1);
+      expect(res.body[0].name).toBe('Report.txt');
     });
 
     it('limits suggestions to a folder', async () => {

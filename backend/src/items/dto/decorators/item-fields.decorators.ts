@@ -34,7 +34,8 @@ export function FolderName() {
   return applyDecorators(
     ApiProperty({
       example: 'reports',
-      description: 'Letters, numbers, spaces and hyphens. Case sensitive, unique within its folder.',
+      description:
+        'Letters, numbers, spaces and hyphens. Kept as typed; unique in the folder ignoring case.',
     }),
     TrimmedName(),
     Matches(FOLDER_NAME_PATTERN, { message: NAME_CHARS_MESSAGE }),
@@ -46,7 +47,7 @@ export function FileName() {
     ApiProperty({
       example: 'report.pdf',
       description:
-        'Letters, numbers, spaces and hyphens, plus a file extension. Case sensitive, unique within its folder.',
+        'Letters, numbers, spaces and hyphens, plus a file extension. Kept as typed; unique in the folder ignoring case.',
     }),
     TrimmedName(),
     Matches(FILE_NAME_PATTERN, { message: fileNameMessage }),

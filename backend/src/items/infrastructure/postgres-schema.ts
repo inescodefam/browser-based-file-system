@@ -10,8 +10,9 @@ export const POSTGRES_SCHEMA = `
     created_at timestamptz NOT NULL DEFAULT now()
   );
 
+  DROP INDEX IF EXISTS items_parent_name_key;
   CREATE UNIQUE INDEX IF NOT EXISTS items_parent_name_key
-    ON items (parent_id, name) NULLS NOT DISTINCT;
+    ON items (parent_id, LOWER(name)) NULLS NOT DISTINCT;
 
   CREATE INDEX IF NOT EXISTS items_path_gist ON items USING GIST (path);
 

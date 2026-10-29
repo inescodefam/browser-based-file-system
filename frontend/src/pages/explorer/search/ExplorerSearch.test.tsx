@@ -60,7 +60,11 @@ describe('search box', () => {
     await user.type(searchInput(), 'report')
 
     const options = await screen.findAllByRole('option', undefined, AFTER_DEBOUNCE)
-    expect(options.map((option) => option.textContent)).toEqual(['report-2.pdf', 'report.pdf'])
+    expect(options.map((option) => option.textContent)).toEqual([
+      'Report.txt',
+      'report-2.pdf',
+      'report.pdf',
+    ])
   })
 
   it('replaces the folder tree with the top 10 files that start with what was typed', async () => {
@@ -70,7 +74,7 @@ describe('search box', () => {
     await user.type(searchInput(), 'report')
 
     expect(await screen.findByText('Files starting with "report"', undefined, AFTER_DEBOUNCE)).toBeInTheDocument()
-    expect(searchTreeNames()).toEqual(['report-2.pdf', 'report.pdf', 'report.pdf'])
+    expect(searchTreeNames()).toEqual(['Report.txt', 'report-2.pdf', 'report.pdf', 'report.pdf'])
     expect(screen.queryByRole('tree', { name: 'Files and folders' })).not.toBeInTheDocument()
   })
 
@@ -140,7 +144,7 @@ describe('search box', () => {
     await user.dblClick(await screen.findByText('docs'))
     await user.type(searchInput(), 'report')
     expect(await screen.findByText('Files starting with "report"', undefined, AFTER_DEBOUNCE)).toBeInTheDocument()
-    expect(searchTreeNames()).toEqual(['report-2.pdf', 'report.pdf', 'report.pdf'])
+    expect(searchTreeNames()).toEqual(['Report.txt', 'report-2.pdf', 'report.pdf', 'report.pdf'])
 
     await user.click(await folderCheckbox())
 
